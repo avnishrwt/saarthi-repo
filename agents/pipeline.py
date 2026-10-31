@@ -44,7 +44,7 @@ def build(store, now_fn):
                 msg.raw_text = text
                 msg.meta["transcribed_by"] = engine
             else:
-                msg.meta["review_reason"] = "audio received, no speech-to-text engine configured"
+                msg.meta["review_reason"] = f"voice note received, could not turn it into text ({engine}): please listen"
         return {"msg": msg, "trace": trace}
 
     def extract(s: PipelineState) -> dict[str, Any]:

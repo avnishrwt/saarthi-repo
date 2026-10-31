@@ -1,0 +1,22 @@
+{
+  "_note": "Official guideline documents used for the SOP checklist. The PDFs are NOT in git (large): run  python -m rag.fetch_sop  to download them into data/sop/. Only the response chapters are used for field checklists. Nothing in the checklist is written from memory: every item is a sentence from these documents, with its page.",
+  "ndma_management_of_floods_2008": {
+    "title": "National Disaster Management Guidelines: Management of Floods",
+    "publisher": "National Disaster Management Authority (NDMA), Government of India",
+    "year": 2008,
+    "url": "https://ndma.gov.in/sites/default/files/PDF/Guidelines/flood.pdf",
+    "hazards": ["water"],
+    "response_sections": ["8"],
+    "response_chapter": "Chapter 8: Flood Response"
+  },
+  "ndma_urban_flooding_2010": {
+    "title": "National Disaster Management Guidelines: Management of Urban Flooding",
+    "publisher": "National Disaster Management Authority (NDMA), Government of India",
+    "year": 2010,
+    "url": "https://sdma.goa.gov.in/sites/default/files/2022-05/management_urban_flooding.pdf",
+    "url_note": "copy hosted by Goa State Disaster Management Authority",
+    "hazards": ["water"],
+    "response_sections": ["7"],
+    "response_chapter": "Chapter 7: Response"
+  }
+}

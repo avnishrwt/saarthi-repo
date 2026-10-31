@@ -82,6 +82,8 @@ async def lifespan(app: FastAPI):
     loop = asyncio.get_running_loop()
     queue: asyncio.Queue = asyncio.Queue()
     rahat.listeners.append(lambda ev: loop.call_soon_threadsafe(queue.put_nowait, ev))
+    from rag import sop
+    sop.warm_up()                       # official SOP PDFs loaded in the background, first checklist is instant
     tasks = [asyncio.create_task(_broadcaster(queue)), asyncio.create_task(_ticker())]
     log.info("RAHAT up. extractor=%s cost_mode=%s", rahat.state()["metrics"]["extractor"], config.COST_MODE)
     yield
@@ -102,6 +104,20 @@ def _404(e: KeyError):
 def post_message(body: MessageIn):
     m = rahat.ingest(body)
     return {"id": m.id, "status": m.status, "sender_hash": m.sender_hash}
+
+
+@app.get("/messages/{message_id}/audio")
+def get_audio(message_id: str):
+    """Original voice note, so the operator can listen and check the transcript.
+    Only files inside uploads/ are served. NOTE: there is no login yet; add one before a public deploy."""
+    from fastapi.responses import FileResponse
+    m = rahat.store.get("messages", message_id)
+    if m is None or not m.audio_url:
+        raise HTTPException(404, "no voice note for this message")
+    p = Path(m.audio_url).resolve()
+    if UPLOADS.resolve() not in p.parents or not p.exists():
+        raise HTTPException(404, "audio file not available")
+    return FileResponse(p)
 
 
 @app.post("/messages/voice", status_code=202)
@@ -384,7 +400,11 @@ def sim_conversation(sender_id: Optional[str] = None, sender_hash: Optional[str]
     if not (sender_id or sender_hash):
         raise HTTPException(400, "give sender_id or sender_hash")
     h = sender_hash or hash_sender(sender_id)
-    sent = [{"mine": True, "text": m.raw_text or f"[{m.channel.value}]", "at": m.received_at.isoformat(),
+    def shown(m):
+        if m.audio_url:          # voice note: show the transcript once it is ready
+            return f"🎙 {m.raw_text}" if m.raw_text else "🎙 Voice note (turning it into text…)"
+        return m.raw_text or f"[{m.channel.value}]"
+    sent = [{"mine": True, "text": shown(m), "at": m.received_at.isoformat(),
              "channel": m.channel.value} for m in rahat.store.messages_by_sender(h)]
     got = [{"mine": False, "text": o["text"], "at": o["at"], "channel": o["channel"]} for o in rahat.store.outbox(h, 200)]
     from datetime import datetime

@@ -85,8 +85,12 @@ export default function Citizen() {
   const upload = async (blob, name) => {
     const fd = new FormData()
     fd.append('file', blob, name); fd.append('sender_id', sender); fd.append('channel', 'voice')
-    const r = await api('/messages/voice', { body: fd })
-    note(`voice note ${r.id} uploaded`)
+    try {
+      const r = await api('/messages/voice', { body: fd })
+      note(`voice note ${r.id} uploaded`)
+      toast('🎙 Voice note sent: turning it into text…', 'ok')
+      setTimeout(refresh, 600)
+    } catch (e) { toast(errText(e), 'error') }
   }
 
   const callbacks = (state?.incidents || []).filter((i) => i.callback.status === 'pending' && ['open', 'assigned'].includes(i.status))
@@ -129,8 +133,8 @@ export default function Citizen() {
           </div>
         </details>
         <div className="row">
-          {rec ? <button className="danger" onClick={() => { rec.stop(); setRec(null) }}>Stop + send voice note</button>
-            : <button onClick={startRec}>Record voice note</button>}
+          {rec ? <button className="danger rec-on" onClick={() => { rec.stop(); setRec(null) }}>⏺ Recording… tap to stop + send</button>
+            : <button onClick={startRec}>🎙 Record voice note</button>}
           <label className="upload">Upload audio<input type="file" accept="audio/*" onChange={(e) => e.target.files[0] && upload(e.target.files[0], e.target.files[0].name)} /></label>
         </div>
       </div>

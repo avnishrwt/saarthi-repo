@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { sendTeamStatus } from './opqueue.js'
-import { api, ACTION_LABEL, ASSIGN_TEXT, BAND_COLOR, BAND_NAME, CALLBACK_TEXT, NEED_TEXT, TEAM_ICON, VULN_TEXT, ago, errText, explainFlag, fmtTime, toast, trustSteps } from './api.js'
+import { api, API, ACTION_LABEL, ASSIGN_TEXT, BAND_COLOR, BAND_NAME, CALLBACK_TEXT, NEED_TEXT, TEAM_ICON, VULN_TEXT, ago, errText, explainFlag, fmtTime, toast, trustSteps } from './api.js'
 
 const FACTOR_NAME = { medical: 'Medical danger', people: 'People at risk', vulnerable: 'Elderly / child / alone', hazard: 'Water / hazard level', waiting: 'Time waiting' }
 const STATUS_TEXT = { open: 'Open', assigned: 'Team assigned', resolved: 'Resolved', false: 'False report' }
@@ -211,8 +211,14 @@ export default function IncidentPanel({ id, state, onClose, version }) {
           <div className="ichat">
             {d.messages.map((m) => (
               <div key={m.id} className="ibubble">
-                <div className="ibubble-meta">{CHANNEL_ICON[m.channel] || m.channel} · sender {m.sender_hash.slice(0, 6)} · {fmtTime(m.received_at)}</div>
-                <div>{m.raw_text || <i>(no text)</i>}</div>
+                <div className="ibubble-meta">{m.audio_url ? '🎙 Voice note' : CHANNEL_ICON[m.channel] || m.channel} · sender {m.sender_hash.slice(0, 6)} · {fmtTime(m.received_at)}</div>
+                <div>{m.raw_text || <i>{m.audio_url ? '(could not turn it into text: please listen)' : '(no text)'}</i>}</div>
+                {m.audio_url && (
+                  <div className="voice">
+                    <audio controls preload="none" src={`${API}/messages/${m.id}/audio`} />
+                    {m.meta?.transcribed_by && <span className="voice-by">text by {m.meta.transcribed_by.split(':')[0]}: please listen if unsure</span>}
+                  </div>
+                )}
               </div>
             ))}
             {i.followup_question && <div className="ibubble ours"><div className="ibubble-meta">RAHAT asked</div>{i.followup_question}</div>}
@@ -223,10 +229,15 @@ export default function IncidentPanel({ id, state, onClose, version }) {
         <section className="ibox">
           <h4>📋 Official SOP checklist</h4>
           {!cl ? <div className="muted">…</div> : cl.status !== 'OK' ? (
-            <div className="sop-miss">{cl.message}{cl.sop_loaded === 0 && <div className="muted small">No SOP documents loaded yet (data/sop/).</div>}</div>
-          ) : (
+            <div className="sop-miss">{cl.message}
+              {cl.why && <div className="small">{cl.why}</div>}
+              {cl.sop_loaded === 0 && <div className="muted small">No SOP documents loaded yet: run  python -m rag.fetch_sop</div>}</div>
+          ) : (<>
             <ol className="checklist">{cl.items.map((it, n) => <li key={n}>{it.text} <span className="src">[{it.source}]</span></li>)}</ol>
-          )}
+            <div className="muted small sop-note">Every step is copied from an official document (section + page shown), nothing is written by AI from memory.{' '}
+              {(cl.documents || []).map((d, k) => <span key={k}>{k ? ' · ' : 'Sources: '}<a href={d.url} target="_blank" rel="noreferrer">{d.title?.split(':').pop().trim()} ({d.year})</a></span>)}
+            </div>
+          </>)}
         </section>
       </div>
     </div>

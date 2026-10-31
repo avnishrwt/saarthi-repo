@@ -230,3 +230,59 @@ def test_operator_radio_update_and_late_phone_tap_is_ignored(r):
     assert res.get("ignored") == "stale assignment"
     assert r.store.get("assignments", a2[0].id).status.value == "approved"     # new job untouched
     assert "stale_status_ignored" in [x.action for x in r.store.audit_list(50)]
+
+
+def test_voice_note_is_transcribed_then_extracted(r, monkeypatch, tmp_path):
+    """Voice -> text -> the same extractor agent -> a case. The transcript is kept and labelled."""
+    from agents import speech
+    up = config.ROOT / "uploads"
+    up.mkdir(exist_ok=True)
+    f = up / "test-voice-note.ogg"
+    f.write_bytes(b"fake-audio")
+    try:
+        monkeypatch.setattr(speech, "engine", lambda: "gemini")
+        monkeypatch.setattr(speech, "_gemini", lambda p: ("Bhai Deep Nagar gali 3 mein meri dadi phasi hai, paani 5 feet hai", "gemini:test"))
+        m = r.ingest(MessageIn(channel="voice", sender_id="S-v", audio_url=str(f)), wait=True)
+        assert m.raw_text.startswith("Bhai Deep Nagar") and m.meta["transcribed_by"] == "gemini:test"
+        inc = r.store.get("incidents", m.incident_id)
+        assert inc.location.place_id == "DEEP_NAGAR" and inc.band == Band.CRIT
+
+        monkeypatch.setattr(speech, "_gemini", lambda p: (None, "gemini(no speech heard)"))
+        m2 = r.ingest(MessageIn(channel="voice", sender_id="S-v2", audio_url=str(f)), wait=True)
+        assert m2.status.value == "review" and "please listen" in m2.meta["review_reason"]   # never dropped
+    finally:
+        f.unlink(missing_ok=True)
+
+
+def test_speech_refuses_files_outside_uploads(tmp_path):
+    from agents import speech
+    secret = tmp_path / "secret.wav"
+    secret.write_bytes(b"not for outside services")
+    text, why = speech.transcribe(str(secret))
+    assert text is None and "refused" in why
+
+
+# ----------------------------------------------------------------- SOP RAG
+def test_sop_rag_only_cites_real_passages(monkeypatch):
+    """Checklist items come only from the response chapter of a document that covers the hazard,
+    each with its page; a hazard the documents do not cover is NOT_IN_SOP (no unrelated fallback)."""
+    from rag import sop
+    from shared.schemas import HazardType, TeamType
+    text = ("<<PAGE 3>>\n2.1 Planning Background\nState governments will prepare long term flood plans and dams.\n"
+            "<<PAGE 9>>\n8.1 Evacuation Of People\nRescue teams will evacuate elderly people and children first "
+            "using boats and life jackets. Relief camps shall be set up with food and drinking water.\n")
+    meta = {"title": "Guidelines: Management of Floods", "year": 2008, "hazards": ["water"], "response_sections": ["8"]}
+    chunks = sop.chunk_text("doc_floods", text, meta)
+    assert [c.response for c in chunks] == [False, True]
+    assert chunks[1].page == 9 and chunks[1].hazards == {"water"}
+    monkeypatch.setattr(sop, "load_chunks", lambda: tuple(chunks))
+    monkeypatch.setattr(sop, "sources", lambda: {"doc_floods": meta})
+    monkeypatch.setattr(sop, "_llm_items", lambda q, h: None)          # extractive path, no API
+    now = now_utc()
+    flood = Incident(id="F", created_at=now, updated_at=now, needs=[Need.rescue], vulnerable=[Vulnerable.elderly],
+                     hazard=HazardType.water, required_team_types=[TeamType.boat])
+    r = sop.checklist(flood)
+    assert r["status"] == "OK" and r["items"]
+    assert all("PDF p.9" in it["source"] and "§8.1" in it["source"] for it in r["items"])   # never the planning chapter
+    fire = Incident(id="X", created_at=now, updated_at=now, needs=[Need.rescue], hazard=HazardType.fire)
+    assert sop.checklist(fire)["status"] == "NOT_IN_SOP"

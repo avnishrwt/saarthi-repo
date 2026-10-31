@@ -569,3 +569,10 @@ button.light:hover { background: #f6f8fa; border-color: #c8d1db; }
 /* offline banners stay on screen (and at the top while scrolling) until the connection is back */
 .phone-app .offline { position: sticky; top: 0; z-index: 50; }
 .op-offline { position: sticky; top: 0; z-index: 50; }
+
+/* ---------------- voice notes */
+.voice { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; }
+.voice audio { width: 100%; height: 34px; }
+.voice-by { font-size: 11px; color: #667085; }
+.rec-on { animation: pulse 1.2s infinite; font-weight: 700; }
+.sop-note { margin-top: 6px; line-height: 1.5; }
