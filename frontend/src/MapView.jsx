@@ -8,9 +8,10 @@ export default function MapView({ state, selected, onSelect }) {
   const el = useRef(null)
   const map = useRef(null)
   const layer = useRef(null)
+  const centered = useRef(false)
 
   useEffect(() => {
-    map.current = L.map(el.current, { zoomControl: true }).setView([30.31, 78.033], 14)
+    map.current = L.map(el.current, { zoomControl: true }).setView([30.30, 78.035], 13)   // Dehradun
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19, attribution: '&copy; OpenStreetMap contributors',
     }).addTo(map.current)
@@ -23,6 +24,7 @@ export default function MapView({ state, selected, onSelect }) {
     const g = layer.current
     g.clearLayers()
     const { area, incidents, teams, assignments, places } = state
+    if (!centered.current) { map.current.setView(area.center, 13); centered.current = true }
     L.circle(area.center, { radius: area.radius_km * 1000, color: '#0f3d3e', weight: 1, dashArray: '4 6', fill: false }).addTo(g)
     places.filter((p) => p.flooded).forEach((p) =>
       L.circle([p.lat, p.lng], { radius: 120, color: '#4fc3f7', weight: 0, fillOpacity: 0.18 }).addTo(g))

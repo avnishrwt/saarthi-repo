@@ -36,9 +36,9 @@ ST_MODEL = os.getenv("RAHAT_ST_MODEL", "sentence-transformers/paraphrase-multili
 SENDER_SALT = os.getenv("RAHAT_SALT", "change-me-at-the-event")
 
 # ----------------------------------------------------------------- affected area
-AREA_NAME = os.getenv("RAHAT_DISTRICT", "Demo District (fictional)")
-AREA_CENTER = (30.3100, 78.0300)
-AREA_RADIUS_KM = 3.5
+AREA_NAME = os.getenv("RAHAT_DISTRICT", "Dehradun (demo scenario)")
+AREA_CENTER = (30.3000, 78.0350)   # affected-area circle over Dehradun; flooded places are a demo assumption
+AREA_RADIUS_KM = 5.5
 
 # ----------------------------------------------------------------- priority (PRD 6.1)
 # P = w1*medical + w2*people + w3*vulnerable + w4*hazard + w5*waiting   (factors 0..10)
@@ -87,7 +87,7 @@ NEED_MISMATCH_PENALTY = 0.30
 COST_MODE = os.getenv("RAHAT_COST_MODE", "weighted")
 LAMBDA = 2.0
 ROAD_FACTOR = 1.3                  # straight line x 1.3 ~ road distance (prototype)
-SPEED_KMH = {"boat": 10, "medical": 30, "relief": 25, "search_rescue": 25, "fire": 30}
+SPEED_KMH = {"boat": 15, "medical": 30, "relief": 25, "search_rescue": 25, "fire": 30}
 SUBSTITUTES = {                    # need type -> [(team type that can stand in, penalty)]
     "relief": [("boat", 8.0)],     # flooded lanes: a boat carries food/water
     "search_rescue": [("boat", 5.0)],

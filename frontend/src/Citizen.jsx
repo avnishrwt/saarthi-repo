@@ -4,9 +4,9 @@ import { api, fmtTime } from './api.js'
 // Citizen simulator (brief section 5): phone-shaped page for live demo moments.
 // Everything hits the same API as a real SMS gateway / 112 feed would.
 const PRESETS = [
-  { label: 'Dadi (relative 1)', sender: 'S-dadi-1', channel: 'whatsapp', text: 'Bhai Rampur gali 3 mein meri dadi phasi hai, paani 5 feet hai' },
-  { label: 'Ramesh uncle (lone)', sender: 'S-ramesh', channel: 'sms', text: 'main akela hu, 75 saal, ghar me paani aa gaya, sector 4 mandir ke peeche' },
-  { label: 'Fake (copy-paste)', sender: 'RANDOM', channel: 'sms', text: 'URGENT 50 log phase hai Kalinagar bridge pe' },
+  { label: 'Dadi (relative 1)', sender: 'S-dadi-1', channel: 'whatsapp', text: 'Bhai Deep Nagar gali 3 mein meri dadi phasi hai, paani 5 feet hai' },
+  { label: 'Ramesh uncle (lone)', sender: 'S-ramesh', channel: 'sms', text: 'main akela hu, 75 saal, ghar me paani aa gaya, kanwali mandir ke peeche' },
+  { label: 'Fake (copy-paste)', sender: 'RANDOM', channel: 'sms', text: 'URGENT 50 log phase hai Har ki Pauri pe' },
   { label: 'Vague food', sender: 'S-vague-9', channel: 'sms', text: 'khana chahiye 4-5 log hai' },
   { label: 'Hindi', sender: 'S-hindi-1', channel: 'sms', text: 'नेहरू कॉलोनी में पानी भर गया है, दादी फंसी है' },
 ]
@@ -19,7 +19,7 @@ export default function Citizen() {
   const [inbox, setInbox] = useState([])
   const [log, setLog] = useState([])
   const [state, setState] = useState(null)
-  const [ivrPlace, setIvrPlace] = useState('MASJID_GALI')
+  const [ivrPlace, setIvrPlace] = useState('RISPANA_BRIDGE')
   const [rec, setRec] = useState(null)
   const chunks = useRef([])
 
@@ -41,7 +41,7 @@ export default function Citizen() {
     setSender(s); setChannel(p.channel); setText(p.text)
   }
   const fakeBurst = async () => {
-    for (let k = 0; k < 6; k++) await send('URGENT 50 log phase hai Kalinagar bridge pe', rnd(), 'sms')
+    for (let k = 0; k < 6; k++) await send('URGENT 50 log phase hai Har ki Pauri pe', rnd(), 'sms')
   }
 
   const startRec = async () => {

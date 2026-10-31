@@ -14,22 +14,23 @@ from shared.schemas import (ApproveIn, Band, Incident, Location, MessageIn, Need
 
 # ----------------------------------------------------------------- extractor (rules)
 def test_dadi_extraction():
-    ex = rules.extract("Bhai Rampur gali 3 mein meri dadi phasi hai, paani 5 feet hai")
-    assert ex.place_id == "RAMPUR_G3"
+    ex = rules.extract("Bhai Deep Nagar gali 3 mein meri dadi phasi hai, paani 5 feet hai")
+    assert ex.place_id == "DEEP_NAGAR"
     assert Vulnerable.elderly in ex.vulnerable
     assert Need.rescue in ex.needs
     assert ex.water_depth_ft == 5
     assert ex.people_count == 1
 
 
-def test_gali_number_never_confused():
-    assert rules.extract("rampur gali 5 me paani").place_id == "RAMPUR_G5"
-    assert rules.extract("rampur gali 4 me paani").place_id is None    # not on our map -> null, not a guess
+def test_unknown_place_stays_null():
+    assert rules.extract("mothro wala me paani").place_id == "MOTHROWALA"     # typo-tolerant
+    assert rules.extract("sector 9 me paani").place_id is None              # not on our map -> null, not a guess
+    assert rules.extract("दीप नगर में पानी").place_id == "DEEP_NAGAR"         # Devanagari
 
 
 def test_ramesh_lone_elderly():
-    ex = rules.extract("main akela hu, 75 saal, ghar me paani aa gaya, sector 4 mandir ke peeche")
-    assert ex.place_id == "SECTOR4_MANDIR"
+    ex = rules.extract("main akela hu, 75 saal, ghar me paani aa gaya, kanwali mandir ke peeche")
+    assert ex.place_id == "KANWALI"
     assert {Vulnerable.elderly, Vulnerable.alone} <= set(ex.vulnerable)
     assert ex.people_count == 1
 
@@ -52,8 +53,8 @@ def test_optimizer_sends_team_a_to_dadi_greedy_does_not():
     teams = [Team(**t) for t in json.loads((config.DATA_DIR / "teams.json").read_text())
              if t["id"] in ("BOAT-A", "BOAT-B")]
     t0 = now_utc()
-    food = _inc("FOOD", 30.3100, 78.049343, 10.0, t0)                       # arrives first
-    dadi = _inc("DADI", 30.3100, 78.0300, 18.0, t0 + timedelta(seconds=5))  # critical
+    food = _inc("FOOD", 30.31349, 78.05924, 10.0, t0)                       # arrives first
+    dadi = _inc("DADI", 30.28857, 78.05132, 18.0, t0 + timedelta(seconds=5))  # critical
     slots = optimizer.open_slots([food, dadi], optimizer.Counter())
     rahat = {p.slot.incident.id: (p.team.id, p.eta_min) for p in optimizer.solve(teams, slots)}
     greedy = {p.slot.incident.id: (p.team.id, p.eta_min) for p in optimizer.greedy(teams, slots)}
@@ -66,7 +67,7 @@ def test_optimizer_sends_team_a_to_dadi_greedy_does_not():
 def test_optimizer_is_deterministic():
     teams = [Team(**t) for t in json.loads((config.DATA_DIR / "teams.json").read_text())]
     t0 = now_utc()
-    incs = [_inc(f"I{i}", 30.30 + i * 0.003, 78.02 + i * 0.004, 5 + i, t0) for i in range(6)]
+    incs = [_inc(f"I{i}", 30.29 + i * 0.004, 78.01 + i * 0.008, 5 + i, t0) for i in range(6)]
     slots = optimizer.open_slots(incs, optimizer.Counter())
     a = [(p.team.id, p.slot.incident.id) for p in optimizer.solve(teams, slots)]
     b = [(p.team.id, p.slot.incident.id) for p in optimizer.solve(teams, slots)]
@@ -93,15 +94,15 @@ def test_flood_night_story(r):
         by_place.setdefault(i.location.place_id, []).append(i)
 
     # three dadi messages -> ONE incident, critical, high confidence
-    dadi = by_place["RAMPUR_G3"]
+    dadi = by_place["DEEP_NAGAR"]
     assert len(dadi) == 1 and len(dadi[0].message_ids) == 3
     assert dadi[0].band == Band.CRIT and dadi[0].confidence >= 0.8
 
     # food at the school is a separate incident (not merged with dadi)
-    assert len(by_place["RAMPUR_SCHOOL"]) == 1
+    assert len(by_place["DALANWALA"]) == 1
 
     # fake: one incident, red flags, verify first, never deleted, no team recommended
-    fake = by_place["KALINAGAR_BRIDGE"][0]
+    fake = by_place["HAR_KI_PAURI"][0]
     assert len(fake.message_ids) == 8
     assert any(f.startswith("copy_paste_burst") for f in fake.red_flags)
     assert any(f.startswith("out_of_area") for f in fake.red_flags)
@@ -117,17 +118,17 @@ def test_flood_night_story(r):
     # recommendations: A -> dadi, B -> food; nothing for the fake
     rec = {a.incident_id: a.team_id for a in r.store.all("assignments") if a.status.value == "recommended"}
     assert rec[dadi[0].id] == "BOAT-A"
-    assert rec[by_place["RAMPUR_SCHOOL"][0].id] == "BOAT-B"
+    assert rec[by_place["DALANWALA"][0].id] == "BOAT-B"
     assert fake.id not in rec
 
     # follow-up reply joins the vague incident and gets a location
-    send(r, "S-vague-1", "panchayat bhawan ke paas wali gali")
+    send(r, "S-vague-1", "parade ground ke paas wali gali")
     v = r.store.get("incidents", vague[0].id)
-    assert v.location.place_id == "PANCHAYAT_BHAWAN" and len(v.message_ids) == 2
+    assert v.location.place_id == "PARADE_GROUND" and len(v.message_ids) == 2
 
 
 def test_lone_victim_stays_high_and_callback_runs(r):
-    send(r, "S-ramesh", "main akela hu, 75 saal, ghar me paani aa gaya, sector 4 mandir ke peeche")
+    send(r, "S-ramesh", "main akela hu, 75 saal, ghar me paani aa gaya, kanwali mandir ke peeche")
     inc = r.store.all("incidents")[0]
     assert inc.band == Band.CRIT
     assert inc.confidence >= config.CONF_HIGH            # neutral, not low
@@ -137,7 +138,7 @@ def test_lone_victim_stays_high_and_callback_runs(r):
 
 
 def test_approve_rescue_resolve_loop(r):
-    send(r, "S-dadi-1", "Bhai Rampur gali 3 mein meri dadi phasi hai, paani 5 feet hai")
+    send(r, "S-dadi-1", "Bhai Deep Nagar gali 3 mein meri dadi phasi hai, paani 5 feet hai")
     a = [x for x in r.store.all("assignments") if x.status.value == "recommended"][0]
     r.decide(a.id, ApproveIn(operator="op1"))
     assert r.store.get("teams", a.team_id).status.value == "busy"
@@ -153,7 +154,7 @@ def test_approve_rescue_resolve_loop(r):
 
 
 def test_no_one_here_lowers_reputation(r):
-    m = send(r, "S-x", "rampur gali 5 me 3 log phase hai paani 4 feet")
+    m = send(r, "S-x", "mothrowala me 3 log phase hai paani 4 feet")
     a = [x for x in r.store.all("assignments") if x.status.value == "recommended"][0]
     r.decide(a.id, ApproveIn())
     r.team_status(a.team_id, TeamStatusIn(status="no_one_here"))
@@ -162,7 +163,7 @@ def test_no_one_here_lowers_reputation(r):
 
 
 def test_gps_ping_moves_team_without_changing_assignment(r):
-    send(r, "S-dadi-1", "Bhai Rampur gali 3 mein meri dadi phasi hai, paani 5 feet hai")
+    send(r, "S-dadi-1", "Bhai Deep Nagar gali 3 mein meri dadi phasi hai, paani 5 feet hai")
     a = [x for x in r.store.all("assignments") if x.status.value == "recommended"][0]
     r.decide(a.id, ApproveIn())
     r.team_status(a.team_id, TeamStatusIn(status="location", lat=30.3111, lng=78.0400))
@@ -172,7 +173,7 @@ def test_gps_ping_moves_team_without_changing_assignment(r):
 
 
 def test_reject_bans_pair(r):
-    send(r, "S-dadi-1", "Bhai Rampur gali 3 mein meri dadi phasi hai, paani 5 feet hai")
+    send(r, "S-dadi-1", "Bhai Deep Nagar gali 3 mein meri dadi phasi hai, paani 5 feet hai")
     a = [x for x in r.store.all("assignments") if x.status.value == "recommended"][0]
     r.decide(a.id, ApproveIn(action="reject"))
     rec = [x for x in r.store.all("assignments") if x.status.value == "recommended"]

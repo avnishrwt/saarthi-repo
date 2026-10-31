@@ -24,6 +24,13 @@ cd frontend; npm install; npm run dev     # http://localhost:5173
 Or run `npm run build` once; FastAPI then serves everything at `http://localhost:8000/ui/`.
 Tests: `.\.venv\Scripts\python -m pytest -q` (11 known-answer tests, including "optimizer sends Team A to dadi, greedy does not").
 
+## The map
+Real Dehradun places, with coordinates from OpenStreetMap (Nominatim) in `data/locations.csv`. Two flood zones: the
+**Rispana** side (Deep Nagar, Dalanwala, Rispana Bridge, Nehru Colony, Mothrowala) and the **Bindal** side (Majra,
+Kanwali). **Which places are flooded is a demo assumption, not real flood data**, and all people are fictional.
+Story: dadi in Deep Nagar, food request at a Dalanwala school, roof family in Majra, Ramesh uncle in Kanwali,
+Kamla ji near Rispana Bridge, and the fake from Har Ki Pauri (Haridwar, outside the affected area).
+
 ## Demo flow (about 4 min)
 1. **Simulate IMD alert**: Surge Mode goes to STANDBY and proactive calls start.
 2. **Replay burst**: the flood-night messages arrive. Three dadi messages become one CRIT incident, the copy-paste fake gets red flags + VERIFY, noise is filtered out, and a follow-up SMS goes to the vague sender.
