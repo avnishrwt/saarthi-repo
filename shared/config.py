@@ -21,8 +21,10 @@ DB_PATH = os.getenv("RAHAT_DB", str(ROOT / "rahat.db"))
 _default_provider = ("gemini" if (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"))
                      else "anthropic" if os.getenv("ANTHROPIC_API_KEY") else "rules")
 LLM_PROVIDER = os.getenv("RAHAT_LLM", _default_provider)
-# Check the current model names in Google AI Studio before the event; set RAHAT_LLM_MODEL in .env.
-LLM_MODEL = os.getenv("RAHAT_LLM_MODEL", {"gemini": "gemini-2.5-flash",
+# Tested 2026-10-31 on 6 demo messages: gemini-3.1-flash-lite was correct on all 6 in 1-4 s.
+# gemini-2.5-flash is closed to new keys; 3.7/3.8-flash returned 503/504; 3.5-flash-lite invented
+# "alone" for dadi. Re-test on the 20-message set (brief decision #1) and override with RAHAT_LLM_MODEL.
+LLM_MODEL = os.getenv("RAHAT_LLM_MODEL", {"gemini": "gemini-3.1-flash-lite",
                                           "anthropic": "claude-opus-5-5"}.get(LLM_PROVIDER, "none"))
 LLM_EFFORT = os.getenv("RAHAT_LLM_EFFORT", "low")   # anthropic only: extraction is simple, keep latency down
 LLM_TIMEOUT_S = float(os.getenv("RAHAT_LLM_TIMEOUT_S", "20"))

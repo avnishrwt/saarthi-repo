@@ -51,7 +51,7 @@ Tests: `.\.venv\Scripts\python -m pytest -q` (11 known-answer tests, including "
 - **The LLM never allocates teams.** OR-Tools gives the same answer every time and every cost is shown.
 
 ## Before the pitch (still open)
-- **Gemini model**: check the current model names in AI Studio and set `RAHAT_LLM_MODEL`. Test 2–3 models on 20 Hinglish messages (brief decision #1).
+- **Gemini model**: default `gemini-3.1-flash-lite` (6/6 demo messages correct, 1–4 s each, tested 31 Oct). `gemini-2.5-flash` is closed to new keys. Still test 2–3 models on the 20 Hinglish messages (brief decision #1); free-tier rate limits may slow a 200-message burst, and the system then falls back to rules for the failed calls.
 - **SOP documents**: put OFFICIAL NDMA text in `data/sop/`. It is empty now, so every checklist says "Not in SOP, escalate to officer". We never generate guidance from memory.
 - **Speech-to-text**: `RAHAT_STT=faster_whisper` or Bhashini; test on real Hinglish voice notes. Until then voice notes go to human review (never dropped).
 - **200 labelled messages**: human-written (`data/labelled_messages_TEMPLATE.csv`). Do not use AI-generated messages for evaluation.
