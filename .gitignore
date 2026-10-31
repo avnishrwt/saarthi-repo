@@ -17,3 +17,10 @@ frontend/dist/
 
 # the locked evaluation split stays off GitHub until final evaluation
 data/labelled_messages_locked.csv
+
+# evaluation run outputs (copy the final one somewhere if you want to keep it)
+evaluation/results/
+
+# official SOP PDFs are large: download with  python -m rag.fetch_sop  (list in data/sop/sources.json)
+data/sop/*.pdf
+data/sop/.cache/

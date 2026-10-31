@@ -282,6 +282,9 @@ class TeamStatusIn(BaseModel):
     lat: Optional[float] = None
     lng: Optional[float] = None
     client_ts: Optional[datetime] = None   # when the team tapped it (offline queue)
+    assignment_id: Optional[str] = None    # the job this tap is about: late taps for an old job are ignored
+    by: Optional[str] = None               # set when the OPERATOR enters it for the team (radio fallback)
+    via: Optional[str] = None              # "radio" | "phone" ... (shown in the audit log)
 
 
 class VerifyIn(BaseModel):

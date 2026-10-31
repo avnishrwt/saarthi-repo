@@ -82,6 +82,8 @@ async def lifespan(app: FastAPI):
     loop = asyncio.get_running_loop()
     queue: asyncio.Queue = asyncio.Queue()
     rahat.listeners.append(lambda ev: loop.call_soon_threadsafe(queue.put_nowait, ev))
+    from rag import sop
+    sop.warm_up()                       # official SOP PDFs loaded in the background, first checklist is instant
     tasks = [asyncio.create_task(_broadcaster(queue)), asyncio.create_task(_ticker())]
     log.info("RAHAT up. extractor=%s cost_mode=%s", rahat.state()["metrics"]["extractor"], config.COST_MODE)
     yield
@@ -102,6 +104,20 @@ def _404(e: KeyError):
 def post_message(body: MessageIn):
     m = rahat.ingest(body)
     return {"id": m.id, "status": m.status, "sender_hash": m.sender_hash}
+
+
+@app.get("/messages/{message_id}/audio")
+def get_audio(message_id: str):
+    """Original voice note, so the operator can listen and check the transcript.
+    Only files inside uploads/ are served. NOTE: there is no login yet; add one before a public deploy."""
+    from fastapi.responses import FileResponse
+    m = rahat.store.get("messages", message_id)
+    if m is None or not m.audio_url:
+        raise HTTPException(404, "no voice note for this message")
+    p = Path(m.audio_url).resolve()
+    if UPLOADS.resolve() not in p.parents or not p.exists():
+        raise HTTPException(404, "audio file not available")
+    return FileResponse(p)
 
 
 @app.post("/messages/voice", status_code=202)
@@ -297,7 +313,14 @@ def sim_reset():
 
 @app.post("/sim/replay")
 async def sim_replay(body: ReplayIn):
-    data = json.loads((config.DATA_DIR / body.scenario).read_text(encoding="utf-8"))
+    # only demo scenario files from data/: the endpoint is reachable through the public tunnel
+    name = Path(body.scenario).name
+    if name != body.scenario or not name.startswith("demo_scenario") or not name.endswith(".json"):
+        raise HTTPException(400, "scenario must be a data/demo_scenario*.json file name")
+    path = config.DATA_DIR / name
+    if not path.exists():
+        raise HTTPException(404, f"no such scenario: {name}")
+    data = json.loads(path.read_text(encoding="utf-8"))
 
     async def run():
         t_prev = 0.0
@@ -345,6 +368,47 @@ def sim_proactive(resident_id: str, body: ProactiveIn):
 def sim_outbox(sender_id: Optional[str] = None):
     from backend.service import hash_sender
     return rahat.store.outbox(hash_sender(sender_id) if sender_id else None)
+
+
+def _wa_label(sender_hash: str) -> str:
+    """Masked label for a real WhatsApp sender: never the full number (this page is reachable via the tunnel)."""
+    wa = whatsapp._reply_to.get(sender_hash)
+    return f"WhatsApp ••••{wa[-4:]}" if wa else f"WhatsApp user {sender_hash[:6]}"
+
+
+@app.get("/sim/live_chats")
+def sim_live_chats():
+    """Real WhatsApp conversations (messages that came in through the Cloud API webhook), newest first."""
+    chats: dict[str, dict] = {}
+    for m in rahat.store.all("messages"):
+        if m.meta.get("source_system") != "whatsapp_cloud_api":
+            continue
+        c = chats.setdefault(m.sender_hash, {"sender_hash": m.sender_hash, "label": _wa_label(m.sender_hash),
+                                             "count": 0, "last_at": None, "last_text": "", "incident_id": None})
+        c["count"] += 1
+        if c["last_at"] is None or m.received_at.isoformat() > c["last_at"]:
+            c["last_at"], c["last_text"] = m.received_at.isoformat(), (m.raw_text or f"[{m.channel.value}]")[:80]
+            c["incident_id"] = m.incident_id
+    return sorted(chats.values(), key=lambda c: c["last_at"] or "", reverse=True)
+
+
+@app.get("/sim/conversation")
+def sim_conversation(sender_id: Optional[str] = None, sender_hash: Optional[str] = None):
+    """Citizen simulator: what this phone sent + what RAHAT replied, oldest first (survives a page reload).
+    sender_hash opens a REAL WhatsApp chat from /sim/live_chats (read-only in the simulator)."""
+    from backend.service import hash_sender
+    if not (sender_id or sender_hash):
+        raise HTTPException(400, "give sender_id or sender_hash")
+    h = sender_hash or hash_sender(sender_id)
+    def shown(m):
+        if m.audio_url:          # voice note: show the transcript once it is ready
+            return f"🎙 {m.raw_text}" if m.raw_text else "🎙 Voice note (turning it into text…)"
+        return m.raw_text or f"[{m.channel.value}]"
+    sent = [{"mine": True, "text": shown(m), "at": m.received_at.isoformat(),
+             "channel": m.channel.value} for m in rahat.store.messages_by_sender(h)]
+    got = [{"mine": False, "text": o["text"], "at": o["at"], "channel": o["channel"]} for o in rahat.store.outbox(h, 200)]
+    from datetime import datetime
+    return sorted(sent + got, key=lambda x: datetime.fromisoformat(x["at"]))
 
 
 @app.get("/sim/open_incidents_for_callback")

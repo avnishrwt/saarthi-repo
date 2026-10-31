@@ -1,0 +1,356 @@
+{
+ "_note": "AI-GENERATED synthetic messages for the demo (same 50 rows as data/synthetic_messages_AI_dehradun.csv, msg_id in 'ref'). Places are real Dehradun places (OpenStreetMap); which places are flooded is a demo assumption; people are fictional; senders are fake ids. Timings compressed 15x from the CSV timestamps. NOT an evaluation set and not real-world accuracy.",
+ "name": "dehradun_night_50_synthetic",
+ "messages": [
+  {
+   "t": 0.0,
+   "channel": "whatsapp",
+   "sender": "D50-P01",
+   "text": "Deep Nagar gali 4 me hamara ghar doob raha hai, nani ji 82 saal ki hai upar nahi chadh pa rahi, paani 4 feet",
+   "ref": "S-001"
+  },
+  {
+   "t": 6.3,
+   "channel": "sms",
+   "sender": "D50-P02",
+   "text": "deep nagar gali 4 ek buzurg aurat phasi hai paani bahut hai plz boat bhejo",
+   "ref": "S-002"
+  },
+  {
+   "t": 12.3,
+   "channel": "whatsapp",
+   "sender": "D50-P03",
+   "text": "Nani ko bachao deepnagar gali no 4, ghar me paani ghus gaya",
+   "ref": "S-003"
+  },
+  {
+   "t": 15.7,
+   "channel": "sms",
+   "sender": "D50-P04",
+   "text": "Majra me chhat pe 7 log hai, 2 chhote bacche bhi, paani badh raha hai",
+   "ref": "S-004"
+  },
+  {
+   "t": 25.0,
+   "channel": "whatsapp",
+   "sender": "D50-P05",
+   "text": "majra wali gali me family chhat pe phasi hai bacche ro rahe hai",
+   "ref": "S-005"
+  },
+  {
+   "t": 27.7,
+   "channel": "sms",
+   "sender": "D50-P06",
+   "text": "Rispana pul ke paas 3 log paani me beh gaye ek ko pakad ke rakha hai jaldi",
+   "ref": "S-006"
+  },
+  {
+   "t": 33.7,
+   "channel": "whatsapp",
+   "sender": "D50-P07",
+   "text": "Dalanwala primary school me 35 log ruke hai, raat se khana nahi mila",
+   "ref": "S-007"
+  },
+  {
+   "t": 36.3,
+   "channel": "sms",
+   "sender": "D50-P08",
+   "text": "dalanwala school relief camp me paani ki bottle khatam, bacche bhi hai",
+   "ref": "S-008"
+  },
+  {
+   "t": 39.7,
+   "channel": "sms",
+   "sender": "D50-P09",
+   "text": "Kargi chowk ke paas mere papa ko heart attack aaya hai, ambulance nahi aa rahi",
+   "ref": "S-009"
+  },
+  {
+   "t": 45.7,
+   "channel": "whatsapp",
+   "sender": "D50-P10",
+   "text": "Nehru colony me pregnant didi ko dard shuru ho gaya, bahar paani bhara hai",
+   "ref": "S-010"
+  },
+  {
+   "t": 48.0,
+   "channel": "sms",
+   "sender": "D50-P11",
+   "text": "kab tak barish rukegi koi batao",
+   "ref": "S-011"
+  },
+  {
+   "t": 51.7,
+   "channel": "sms",
+   "sender": "D50-P12",
+   "text": "Mothrowala road pe hum 4 log car me phase hai paani darwaze tak aa gaya",
+   "ref": "S-012"
+  },
+  {
+   "t": 57.0,
+   "channel": "whatsapp",
+   "sender": "D50-P13",
+   "text": "main akeli hu 70 saal ki, kanwali gaon me ghar me ghutno tak paani",
+   "ref": "S-013"
+  },
+  {
+   "t": 59.7,
+   "channel": "sms",
+   "sender": "D50-P14",
+   "text": "Paltan bazar me ek dukaan me aag lag gayi upar 2 log phase hai",
+   "ref": "S-014"
+  },
+  {
+   "t": 62.3,
+   "channel": "whatsapp",
+   "sender": "D50-P15",
+   "text": "paltan bazaar aag!! dhuan bahut hai log upar wali manzil pe",
+   "ref": "S-015"
+  },
+  {
+   "t": 65.7,
+   "channel": "sms",
+   "sender": "D50-P16",
+   "text": "URGENT 100 log phase hai har ki pauri ghat pe turant NDRF bhejo",
+   "ref": "S-016"
+  },
+  {
+   "t": 66.2,
+   "channel": "sms",
+   "sender": "D50-P17",
+   "text": "URGENT 100 log phase hai har ki pauri ghat pe turant NDRF bhejo",
+   "ref": "S-017"
+  },
+  {
+   "t": 66.7,
+   "channel": "sms",
+   "sender": "D50-P18",
+   "text": "URGENT 100 log phase hai har ki pauri ghat pe turant NDRF bhejo",
+   "ref": "S-018"
+  },
+  {
+   "t": 67.1,
+   "channel": "sms",
+   "sender": "D50-P19",
+   "text": "URGENT 100 log phase hai har ki pauri ghat pe turant NDRF bhejo",
+   "ref": "S-019"
+  },
+  {
+   "t": 69.7,
+   "channel": "sms",
+   "sender": "D50-P20",
+   "text": "jaldi koi aao paani bhar gaya hai ghar me",
+   "ref": "S-020"
+  },
+  {
+   "t": 72.3,
+   "channel": "whatsapp",
+   "sender": "D50-P21",
+   "text": "Clement Town ke upar pahadi pe landslide, 2 ghar mitti me dabe, log andar ho sakte hai",
+   "ref": "S-021"
+  },
+  {
+   "t": 75.7,
+   "channel": "sms",
+   "sender": "D50-P22",
+   "text": "ISBT pe 60-70 yatri phase hai, bus nahi chal rahi, khana chahiye",
+   "ref": "S-022"
+  },
+  {
+   "t": 80.7,
+   "channel": "sms",
+   "sender": "D50-P23",
+   "text": "ghanta ghar ke paas purani building gir gayi, neeche log dabe hai",
+   "ref": "S-023"
+  },
+  {
+   "t": 83.7,
+   "channel": "whatsapp",
+   "sender": "D50-P24",
+   "text": "Doon hospital me dawai khatam, insulin chahiye 5 marizon ke liye",
+   "ref": "S-024"
+  },
+  {
+   "t": 89.7,
+   "channel": "sms",
+   "sender": "D50-P25",
+   "text": "Prem Nagar me paani bhar gaya 10 log phase",
+   "ref": "S-025"
+  },
+  {
+   "t": 92.3,
+   "channel": "sms",
+   "sender": "D50-P26",
+   "text": "kya school kal band rahenge?",
+   "ref": "S-026"
+  },
+  {
+   "t": 95.7,
+   "channel": "whatsapp",
+   "sender": "D50-P27",
+   "text": "दीप नगर गली 2 में पानी कमर तक, दो बच्चे और मां फंसे हैं",
+   "ref": "S-027"
+  },
+  {
+   "t": 101.0,
+   "channel": "sms",
+   "sender": "D50-P04",
+   "text": "majra 7 log chhat pe abhi tak koi nahi aaya!!",
+   "ref": "S-028"
+  },
+  {
+   "t": 103.7,
+   "channel": "sms",
+   "sender": "D50-P29",
+   "text": "Parade ground ke paas tent me 40 log hai kambal aur khana chahiye",
+   "ref": "S-029"
+  },
+  {
+   "t": 108.3,
+   "channel": "whatsapp",
+   "sender": "D50-P30",
+   "text": "graphic era ke hostel ke neeche paani, 200 students andar safe hai par khana kal tak ka hai",
+   "ref": "S-030"
+  },
+  {
+   "t": 111.7,
+   "channel": "sms",
+   "sender": "D50-P31",
+   "text": "rispana bridge ke paas jo log beh gaye unme se ek ko nikal liya, 2 abhi bhi paani me",
+   "ref": "S-031"
+  },
+  {
+   "t": 117.7,
+   "channel": "sms",
+   "sender": "D50-P32",
+   "text": "koi helpline number hai kya",
+   "ref": "S-032"
+  },
+  {
+   "t": 120.3,
+   "channel": "whatsapp",
+   "sender": "D50-P33",
+   "text": "Dalanwala me light nahi hai aur dadi ka oxygen machine band ho gaya",
+   "ref": "S-033"
+  },
+  {
+   "t": 123.7,
+   "channel": "sms",
+   "sender": "D50-P34",
+   "text": "nehru colni gali 6 me 5 log first floor pe hai paani neeche tak, abhi theek hai",
+   "ref": "S-034"
+  },
+  {
+   "t": 129.0,
+   "channel": "sms",
+   "sender": "D50-P35",
+   "text": "mujhe aur meri wife ko nikalo mothrowala, hum dono 75+ hai",
+   "ref": "S-035"
+  },
+  {
+   "t": 131.7,
+   "channel": "whatsapp",
+   "sender": "D50-P36",
+   "text": "kanwali road pe naali ka paani ghar me, sab theek hai bas safai chahiye",
+   "ref": "S-036"
+  },
+  {
+   "t": 137.7,
+   "channel": "sms",
+   "sender": "D50-P37",
+   "text": "Har ki pauri pe mera bhai phansa hai, wahan bhi paani badh raha",
+   "ref": "S-037"
+  },
+  {
+   "t": 139.7,
+   "channel": "sms",
+   "sender": "D50-P38",
+   "text": "khana chahiye 6 log",
+   "ref": "S-038"
+  },
+  {
+   "t": 144.3,
+   "channel": "whatsapp",
+   "sender": "D50-P39",
+   "text": "Kargi chowk pe ek aadmi ka pair toot gaya gira hai sadak pe, khoon nikal raha",
+   "ref": "S-039"
+  },
+  {
+   "t": 147.7,
+   "channel": "sms",
+   "sender": "D50-P40",
+   "text": "clock tower ke paas building giri hai neeche 3-4 log hai",
+   "ref": "S-040"
+  },
+  {
+   "t": 152.7,
+   "channel": "sms",
+   "sender": "D50-P41",
+   "text": "ISBT ke paas bachon ke liye doodh chahiye, 10 chhote bacche",
+   "ref": "S-041"
+  },
+  {
+   "t": 155.7,
+   "channel": "whatsapp",
+   "sender": "D50-P42",
+   "text": "हमें मदद चाहिए, घर में पानी आ गया है",
+   "ref": "S-042"
+  },
+  {
+   "t": 159.7,
+   "channel": "sms",
+   "sender": "D50-P43",
+   "text": "Rispana pul toot gaya kya? koi update",
+   "ref": "S-043"
+  },
+  {
+   "t": 165.0,
+   "channel": "sms",
+   "sender": "D50-P44",
+   "text": "deep nagar gali 4 nani ab bhi phasi hai paani 5 feet ho gaya",
+   "ref": "S-044"
+  },
+  {
+   "t": 167.7,
+   "channel": "whatsapp",
+   "sender": "D50-P45",
+   "text": "Majra mein ek ladka bijli ke taar se chipak gaya, behosh hai",
+   "ref": "S-045"
+  },
+  {
+   "t": 173.7,
+   "channel": "sms",
+   "sender": "D50-P46",
+   "text": "mothrowala me dawai ki dukaan band, BP ki dawai chahiye 2 buzurgon ko",
+   "ref": "S-046"
+  },
+  {
+   "t": 175.7,
+   "channel": "sms",
+   "sender": "D50-P47",
+   "text": "paltan bazar aag bujh gayi sab bahar aa gaye",
+   "ref": "S-047"
+  },
+  {
+   "t": 180.3,
+   "channel": "whatsapp",
+   "sender": "D50-P48",
+   "text": "GEHU ke paas 3 log nadi ke kinare phase, paani tez",
+   "ref": "S-048"
+  },
+  {
+   "t": 183.7,
+   "channel": "sms",
+   "sender": "D50-P49",
+   "text": "नेहरू कॉलोनी में बुजुर्ग दादा जी अकेले हैं, फोन नहीं उठा रहे",
+   "ref": "S-049"
+  },
+  {
+   "t": 189.7,
+   "channel": "sms",
+   "sender": "D50-P50",
+   "text": "Dalanwala school camp me 35 log, ab bhi khana nahi aaya",
+   "ref": "S-050"
+  }
+ ]
+}

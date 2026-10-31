@@ -14,42 +14,59 @@ const PRESETS = [
 const rnd = () => '+9199' + Math.floor(10000000 + Math.random() * 89999999)
 
 export default function Citizen() {
-  const [sender, setSender] = useState(rnd())
+  // #/citizen?from=S-dadi-1 opens that phone directly (handy to show one person's conversation)
+  const [sender, setSender] = useState(() => new URLSearchParams(location.hash.split('?')[1] || '').get('from') || rnd())
   const [channel, setChannel] = useState('sms')
   const [text, setText] = useState('')
-  const [inbox, setInbox] = useState([])
+  const [chat, setChat] = useState([])          // this phone's conversation, from the backend
   const [log, setLog] = useState([])
-  const [sent, setSent] = useState([])          // this phone's own messages, shown as chat bubbles
   const chatEnd = useRef(null)
   const [state, setState] = useState(null)
   const [ivrPlace, setIvrPlace] = useState('RISPANA_BRIDGE')
   const [rec, setRec] = useState(null)
   const chunks = useRef([])
+  const [liveChats, setLiveChats] = useState([])   // REAL WhatsApp phones (Cloud API webhook)
+  const [live, setLive] = useState(null)           // the real chat being viewed: { sender_hash, label }
+  const knownLive = useRef(null)
 
   const note = (s) => setLog((l) => [`${new Date().toLocaleTimeString()} ${s}`, ...l].slice(0, 12))
   const refresh = useCallback(() => {
-    api(`/sim/outbox?sender_id=${encodeURIComponent(sender)}`).then(setInbox).catch(() => {})
+    api('/sim/live_chats').then((xs) => {
+      if (knownLive.current) {
+        xs.filter((c) => !knownLive.current.has(c.sender_hash)).forEach((c) =>
+          toast(`🟢 New real WhatsApp message from ${c.label}`, 'crit', () => setLive(c)))
+      }
+      knownLive.current = new Set(xs.map((c) => c.sender_hash))
+      setLiveChats(xs)
+    }).catch(() => {})
+    if (live) {
+      api(`/sim/conversation?sender_hash=${encodeURIComponent(live.sender_hash)}`).then(setChat).catch(() => {})
+      api('/state').then(setState).catch(() => {})
+      return
+    }
+    api(`/sim/conversation?sender_id=${encodeURIComponent(sender)}`).then(setChat).catch(() =>
+      // older backend without /sim/conversation: show at least RAHAT's replies
+      api(`/sim/outbox?sender_id=${encodeURIComponent(sender)}`)
+        .then((xs) => setChat(xs.map((m) => ({ ...m, mine: false })).reverse())).catch(() => {}))
     api('/state').then(setState).catch(() => {})
-  }, [sender])
-  useEffect(() => { refresh(); const t = setInterval(refresh, 3000); return () => clearInterval(t) }, [refresh])
+  }, [sender, live])
+  useEffect(() => { refresh(); const t = setInterval(refresh, 2000); return () => clearInterval(t) }, [refresh])
 
   const send = async (t = text, s = sender, c = channel) => {
     if (!t.trim()) return
     try {
       const r = await api('/messages', { body: { channel: c, sender_id: s, raw_text: t } })
-      setSent((xs) => [...xs, { sender: s, text: t, at: new Date().toISOString(), mine: true }])
       note(`sent ${r.id} (${c}) from ${s}`)
       if (s === sender) setText('')
+      setTimeout(refresh, 400)      // show the message + RAHAT's acknowledgement right away
     } catch (e) { toast(errText(e), 'error') }
   }
   // one tap: switch to that person's phone and send their message
   const preset = (p) => {
     const s = p.sender === 'RANDOM' ? rnd() : p.sender
-    setSender(s); setChannel(p.channel); setText('')
+    setLive(null); setSender(s); setChannel(p.channel); setText('')
     send(p.text, s, p.channel)
   }
-  const chat = [...sent.filter((m) => m.sender === sender), ...inbox.map((m) => ({ ...m, mine: false }))]
-    .sort((x, y) => new Date(x.at) - new Date(y.at))
   useEffect(() => { chatEnd.current?.scrollIntoView({ block: 'nearest' }) }, [chat.length])
   const fakeBurst = async () => {
     for (let k = 0; k < 6; k++) await send('URGENT 50 log phase hai Har ki Pauri pe', rnd(), 'sms')
@@ -68,18 +85,24 @@ export default function Citizen() {
   const upload = async (blob, name) => {
     const fd = new FormData()
     fd.append('file', blob, name); fd.append('sender_id', sender); fd.append('channel', 'voice')
-    const r = await api('/messages/voice', { body: fd })
-    note(`voice note ${r.id} uploaded`)
+    try {
+      const r = await api('/messages/voice', { body: fd })
+      note(`voice note ${r.id} uploaded`)
+      toast('🎙 Voice note sent: turning it into text…', 'ok')
+      setTimeout(refresh, 600)
+    } catch (e) { toast(errText(e), 'error') }
   }
 
   const callbacks = (state?.incidents || []).filter((i) => i.callback.status === 'pending' && ['open', 'assigned'].includes(i.status))
   return (
     <div className="citizen">
       <div className="phone">
-        <div className="phone-top">📱 Citizen phone <span className="muted small">(simulated)</span></div>
-        <div className="chat-head">
+        <div className="phone-top">{live ? <>🟢 Real WhatsApp chat <span className="muted small">(live)</span></>
+          : <>📱 Citizen phone <span className="muted small">(simulated)</span></>}</div>
+        <div className={`chat-head ${live ? 'is-live' : ''}`}>
           <div className="chat-avatar">R</div>
-          <div><b>RAHAT Helpline</b><div className="small muted">from {sender}</div></div>
+          <div><b>RAHAT Helpline</b><div className="small muted">{live ? live.label : `from ${sender}`}</div></div>
+          {live && <button className="chat-back" onClick={() => { setLive(null); setChat([]) }}>← Simulator</button>}
         </div>
         <div className="chat">
           {chat.length === 0 && <div className="chat-empty">Type a message for help, or tap an example below.</div>}
@@ -88,12 +111,16 @@ export default function Citizen() {
           ))}
           <div ref={chatEnd} />
         </div>
-        <div className="composer">
-          <textarea rows={2} placeholder="Type in Hinglish / Hindi / English…  (Enter = send)" value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} />
-          <button className="send-btn" onClick={() => send()} aria-label="send">➤</button>
-        </div>
+        {live ? (
+          <div className="composer live-note">This person types on their own phone. RAHAT's replies go to their WhatsApp automatically.</div>
+        ) : (
+          <div className="composer">
+            <textarea rows={2} placeholder="Type in Hinglish / Hindi / English…  (Enter = send)" value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} />
+            <button className="send-btn" onClick={() => send()} aria-label="send">➤</button>
+          </div>
+        )}
         <div className="small muted" style={{ marginTop: 8 }}>Quick examples (one tap sends):</div>
         <div className="presets">{PRESETS.map((p) => <button key={p.label} onClick={() => preset(p)}>{p.label}</button>)}</div>
         <details className="small"><summary>Phone settings</summary>
@@ -106,14 +133,30 @@ export default function Citizen() {
           </div>
         </details>
         <div className="row">
-          {rec ? <button className="danger" onClick={() => { rec.stop(); setRec(null) }}>Stop + send voice note</button>
-            : <button onClick={startRec}>Record voice note</button>}
+          {rec ? <button className="danger rec-on" onClick={() => { rec.stop(); setRec(null) }}>⏺ Recording… tap to stop + send</button>
+            : <button onClick={startRec}>🎙 Record voice note</button>}
           <label className="upload">Upload audio<input type="file" accept="audio/*" onChange={(e) => e.target.files[0] && upload(e.target.files[0], e.target.files[0].name)} /></label>
         </div>
       </div>
 
       <div className="simcol">
         <p><a href="#/">← Back to control room</a></p>
+        <div className="livebox">
+          <h3>🟢 Real WhatsApp messages <span className="muted small">(from real phones, live)</span></h3>
+          {liveChats.length === 0 ? (
+            <div className="muted small">None yet. When someone messages the RAHAT WhatsApp number, the chat appears here
+              and the case appears on the dashboard at the same time.</div>
+          ) : liveChats.map((c) => {
+            const inc = (state?.incidents || []).find((i) => i.id === c.incident_id)
+            return (
+              <button key={c.sender_hash} className={`livechat ${live?.sender_hash === c.sender_hash ? 'on' : ''}`} onClick={() => setLive(c)}>
+                <b>{c.label}</b> <span className="muted small">· {c.count} msg · {fmtTime(c.last_at)}</span>
+                <div className="small">{c.last_text}</div>
+                {inc && <div className="small livechat-case">→ on dashboard as {inc.id}: {inc.title} ({inc.status})</div>}
+              </button>
+            )
+          })}
+        </div>
         <h3>Simulated calls</h3>
         <p className="muted small">For people without smartphones: a missed call or keypad answer also becomes a case.</p>
         <div className="row">

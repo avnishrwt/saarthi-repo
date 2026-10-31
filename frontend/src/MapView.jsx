@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import L from 'leaflet'
-import { BAND_COLOR, BAND_NAME, TEAM_ICON, caseKind } from './api.js'
+import { BAND_COLOR, BAND_NAME, TEAM_ICON, caseKind, explainFlag } from './api.js'
 
 // Incidents = circles sized + coloured by priority (with a text label, never colour only);
 // teams = labelled markers; dashed lines = recommended (grey) / approved (blue) routes.
@@ -84,7 +84,7 @@ export default function MapView({ state, selected, onSelect }) {
       const size = closed ? 30 : Math.round(36 + Math.min(i.priority_score, 30) * 0.4)   // emoji badge 36..48 px
       const color = closed ? '#9e9e9e' : BAND_COLOR[i.band]
       const [, emoji, kindName] = caseKind(i)
-      const tip = `${emoji} <b>${kindName}</b> · ${BAND_NAME[i.band]} priority${closed ? ' (closed)' : ''}${i.confidence < 0.5 ? ' · check first' : ''}<br>${esc(i.title)}<br><i>click for details</i>`
+      const tip = `${emoji} <b>${kindName}</b> · ${BAND_NAME[i.band]} priority${closed ? ' (closed)' : ''}<br>${esc(i.title)}${i.red_flags.length ? `<br><span style="color:#b54708">⚠ May be fake: ${i.red_flags.map((f) => esc(explainFlag(f, i, area).short)).join(' · ')}</span>` : ''}<br><i>click for details</i>`
 
       if (!closed && i.band === 'CRIT') {   // pulsing ring: critical cases catch the eye on a busy map
         L.marker(pos, {

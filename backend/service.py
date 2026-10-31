@@ -29,23 +29,24 @@ from simulation import surge
 
 log = logging.getLogger("rahat.service")
 ACTIVE = (AssignmentStatus.approved, AssignmentStatus.en_route, AssignmentStatus.on_scene)
+# channels where a real person wrote to us and can read a reply (not IVR / proactive / helpline transcripts)
+CITIZEN_CHANNELS = {"sms", "whatsapp", "web", "voice", "volunteer"}
+ACK = ("RAHAT: Aapka message control room tak pahunch gaya hai (ref {ref}). "
+       "Agar jaan ka khatra hai toh 112 pe bhi call karein.")
 
 # Replies to citizens: one per message, so the chat never goes silent. Fixed templates only;
 # the LLM never writes text that a person in danger reads, and nothing promises a team before approval.
-REPLY_CHANNELS = (Channel.sms, Channel.whatsapp, Channel.web, Channel.voice, Channel.volunteer)
-REPLY_NEW = ("RAHAT: Case {id} bana diya gaya hai. Control room ise dekh raha hai. "
-             "Jaan ka khatra ho toh 112 pe bhi call karein.")
+REPLY_NEW = "RAHAT: Case {id} bana diya gaya hai. Control room ise dekh raha hai."   # the ack already said 112
 REPLY_ADDED = "RAHAT: Nayi jaankari case {id} mein jod di gayi hai. Control room ise dekh raha hai."
+REPLY_KNOWN = ("RAHAT: Is jagah ka case pehle se control room mein hai ({id}). "
+               "Aapki jaankari usi mein jod di gayi hai, alag se dobara bhejne ki zaroorat nahi.")
 REPLY_NEED_PLACE = "Team bhejne ke liye aapki jagah chahiye: gali, mohalla ya paas ka landmark."
 REPLY_EN_ROUTE ="RAHAT: {team} aapki taraf aa rahi hai. {eta} Ho sake toh oonchi jagah pe rahein."
-REPLY_INFO = ("RAHAT: Yeh line baadh mein madad ke liye hai. Aapko ya kisi aur ko madad chahiye toh "
-              "jagah aur zaroorat likh kar bhejiye.")
+REPLY_INFO = ("RAHAT: Is message mein madad ki request nahi mili. Agar madad chahiye toh "
+              "jagah (gali / landmark) aur kitne log hain, yeh likh kar bhejein.")
 REPLY_REVIEW = "RAHAT: Aapka message mil gaya hai. Control room ka ek vyakti ise khud dekhega."
 UPDATE_DISPATCHED = "RAHAT: {team} aapki taraf bheji gayi hai. Andaazan {eta} min. Ho sake toh oonchi jagah pe rahein."
 UPDATE_REACHED = "RAHAT: {team} aapki jagah pahunch gayi hai."
-UPDATE_RESCUED = "RAHAT: {team} ne aapka case {id} poora kar diya hai. Agar abhi bhi madad chahiye toh naya message bhejiye."
-UPDATE_NO_ONE = ("RAHAT: {team} ko bataayi gayi jagah pe koi nahi mila. Agar abhi bhi madad chahiye toh "
-                 "sahi jagah ya paas ka landmark bhejiye.")
 
 
 def hash_sender(raw: str) -> str:
@@ -114,9 +115,11 @@ class Rahat:
     def _process(self, msg_id: str) -> None:
         t0 = now_utc()
         msg = self.store.get("messages", msg_id)
-        # WhatsApp: instant ack on first contact (the LLM can take seconds); later messages get _reply only
-        if msg.meta.get("ack_template") and not self.store.outbox(msg.sender_hash, 1):
-            self.store.send(msg.sender_hash, msg.channel.value, msg.meta["ack_template"].format(ref=msg.id))
+        # instant ack on first contact (the LLM can take seconds) and before any follow-up question;
+        # later messages get _reply only, so the chat does not repeat itself
+        ack = msg.meta.get("ack_template") or (ACK if msg.channel.value in CITIZEN_CHANNELS else None)
+        if ack and not self.store.outbox(msg.sender_hash, 1):
+            self.store.send(msg.sender_hash, msg.channel.value, ack.format(ref=msg.id))
         try:
             state = self.graph.invoke({"msg": msg, "trace": [], "use_llm": self.use_llm,
                                        "now": self.clock(), "surge_hazard": surge.get(self.store)["hazard"]})
@@ -149,7 +152,7 @@ class Rahat:
         """Answer every citizen message once: a follow-up question (sent by the verifier) or the case status."""
         with self.store.lock:
             msg = self.store.get("messages", msg_id)
-            if msg.channel not in REPLY_CHANNELS or msg.meta.get("followup_sent"):
+            if msg.channel.value not in CITIZEN_CHANNELS or msg.meta.get("followup_sent"):
                 return
             if inc is None:
                 text = REPLY_REVIEW if msg.status == MessageStatus.review else REPLY_INFO
@@ -167,7 +170,12 @@ class Rahat:
                 else:
                     earlier = [m for m in (self.store.get("messages", i) for i in inc.message_ids if i != msg_id)
                                if m and m.sender_hash == msg.sender_hash]
-                    text = (REPLY_ADDED if earlier else REPLY_NEW).format(id=inc.id)
+                    if earlier:
+                        text = REPLY_ADDED.format(id=inc.id)
+                    elif len(inc.sender_hashes) > 1:      # someone else already reported this case
+                        text = REPLY_KNOWN.format(id=inc.id)
+                    else:
+                        text = REPLY_NEW.format(id=inc.id)
                     if inc.location.lat is None:          # asked once already; keep reminding, don't re-ask
                         text += " " + REPLY_NEED_PLACE
             self.store.send(msg.sender_hash, msg.channel.value, text, inc.id if inc else None)
@@ -269,6 +277,28 @@ class Rahat:
         return a
 
     # ================================================================== field team (FR12)
+    def _field_update(self, status: str, team_name: str, a: Optional[Assignment], inc: Incident) -> Optional[str]:
+        """Message to the people who reported the case when the field team taps a status."""
+        if a is None:
+            return None
+        if status == "en_route":
+            return (f"RAHAT: {team_name} nikal chuki hai, raaste mein hai. Andaazan {round(a.eta_min)} min. "
+                    "Phone ki battery bachayein, oonchi jagah pe rahein.")
+        if status == "reached":
+            return (f"RAHAT: {team_name} aapki batayi jagah pe pahunch gayi hai. Awaaz dein, torch ya "
+                    "kapda hilayein taaki team aapko dekh sake.")
+        if status == "rescued":
+            still = inc.status != IncidentStatus.resolved
+            return (f"RAHAT: {team_name} ne apna kaam poora kar diya. "
+                    + ("Baaki team abhi bhi aa rahi hai." if still else
+                       "Aapka case band kiya ja raha hai. Aur madad chahiye toh isi number pe likhein."))
+        if status == "no_one_here":
+            return (f"RAHAT: {team_name} aapki batayi jagah pe pahunchi lekin wahan koi nahi mila. Agar aap abhi "
+                    "bhi phase hain toh turant sahi jagah aur paas ka landmark likhein.")
+        if status == "need_backup":
+            return "RAHAT: Team ne aur madad maangi hai, ek aur team bheji ja rahi hai."
+        return None
+
     def current_assignment(self, team_id: str) -> Optional[Assignment]:
         act = [a for a in self.store.all("assignments") if a.team_id == team_id and a.status in ACTIVE]
         return max(act, key=lambda a: a.approved_at or a.recommended_at) if act else None
@@ -286,6 +316,15 @@ class Rahat:
                 self.emit("team", id=team_id)
                 return {"team": team, "assignment": None, "incident": None}
             a = self.current_assignment(team_id)
+            # a late tap (phone was offline, or the operator already entered it by radio) for a job that is
+            # no longer this team's current job must NOT touch the new job
+            if body.assignment_id and (a is None or a.id != body.assignment_id):
+                self.store.put("teams", team)
+                self.store.audit(body.by or team_id, "stale_status_ignored", body.assignment_id, None,
+                                 {"status": body.status, "current_assignment": a.id if a else None,
+                                  "client_ts": body.client_ts.isoformat() if body.client_ts else None})
+                self.emit("team", id=team_id)
+                return {"team": team, "assignment": a, "incident": None, "ignored": "stale assignment"}
             inc = self.store.get("incidents", a.incident_id) if a else None
             before = {"team": team.status.value, "assignment": a.status.value if a else None}
             s = body.status
@@ -294,7 +333,6 @@ class Rahat:
             elif s == "reached" and a:
                 a.status = AssignmentStatus.on_scene
                 inc.notes.append(f"{team.name} reached")
-                self._tell_reporters(inc, UPDATE_REACHED.format(team=team.name))
             elif s in ("rescued", "no_one_here") and a:
                 a.status = AssignmentStatus.done
                 team.status = TeamStatus.free
@@ -306,7 +344,6 @@ class Rahat:
                     inc.notes.append(f"{team.name}: rescued / delivered")
                     if not others:
                         inc.status = IncidentStatus.resolved
-                        self._tell_reporters(inc, UPDATE_RESCUED.format(team=team.name, id=inc.id))
                 else:
                     inc.status = IncidentStatus.false
                     inc.notes.append(f"{team.name}: no one here -> report marked false")
@@ -319,7 +356,6 @@ class Rahat:
                     if inc.source == "messages":
                         for sh in inc.sender_hashes:
                             self.store.set_reputation(sh, self.store.reputation(sh) - 0.3)
-                    self._tell_reporters(inc, UPDATE_NO_ONE.format(team=team.name))   # a real person can still correct us
             elif s == "need_backup" and a:
                 inc.required_team_types.append(a.team_type_slot)
                 inc.notes.append(f"{team.name} asked for backup ({a.team_type_slot.value})")
@@ -328,12 +364,19 @@ class Rahat:
             if inc:
                 verifier.refresh(self.store, inc, self.clock())
                 self.store.put("incidents", inc)
+                text = self._field_update(s, team.name, a, inc)
+                if text:
+                    self._tell_reporters(inc, text)
             if a:
                 self.store.put("assignments", a)
             self.store.put("teams", team)
+            if body.by and inc is not None:
+                inc.notes.append(f"{body.by} entered '{s}' for {team.name}" + (f" (via {body.via})" if body.via else ""))
+                self.store.put("incidents", inc)
             self.store.audit(team_id, f"status_{s}", a.id if a else team_id, before,
                              {"team": team.status.value, "assignment": a.status.value if a else None,
-                              "client_ts": body.client_ts.isoformat() if body.client_ts else None})
+                              "client_ts": body.client_ts.isoformat() if body.client_ts else None,
+                              "by": body.by, "via": body.via})
         self.resolve("optimizer")
         self.emit("team", id=team_id)
         return {"team": team, "assignment": a, "incident": inc}
@@ -473,6 +516,9 @@ class Rahat:
             "assignments": [a.model_dump(mode="json") for a in assignments],
             "residents": [r.model_dump(mode="json", exclude={"phone_hash"}) for r in self.store.all("residents")],
             "review": [m.model_dump(mode="json") for m in msgs if m.status == MessageStatus.review],
+            # cases with at least one message from a REAL phone (WhatsApp Cloud API webhook)
+            "live_incidents": sorted({m.incident_id for m in msgs
+                                      if m.incident_id and m.meta.get("source_system") == "whatsapp_cloud_api"}),
             "counts": {
                 "open": len(open_),
                 "assigned": sum(1 for i in incidents if i.status == IncidentStatus.assigned or i.id in active_inc),

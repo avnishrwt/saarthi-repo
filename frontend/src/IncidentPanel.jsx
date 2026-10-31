@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
-import { api, ACTION_LABEL, ASSIGN_TEXT, BAND_COLOR, BAND_NAME, CALLBACK_TEXT, NEED_TEXT, TEAM_ICON, VULN_TEXT, ago, errText, flagText, fmtTime, toast } from './api.js'
+import { sendTeamStatus } from './opqueue.js'
+import { api, API, ACTION_LABEL, ASSIGN_TEXT, BAND_COLOR, BAND_NAME, CALLBACK_TEXT, NEED_TEXT, TEAM_ICON, VULN_TEXT, ago, errText, explainFlag, fmtTime, toast, trustSteps } from './api.js'
 
 const FACTOR_NAME = { medical: 'Medical danger', people: 'People at risk', vulnerable: 'Elderly / child / alone', hazard: 'Water / hazard level', waiting: 'Time waiting' }
 const STATUS_TEXT = { open: 'Open', assigned: 'Team assigned', resolved: 'Resolved', false: 'False report' }
+const RADIO = [['en_route', '🚤 On the way'], ['reached', '📍 Reached'], ['rescued', '✅ Rescued'], ['need_backup', '🆘 Need backup'], ['no_one_here', '✗ No one here']]
 const CHANNEL_ICON = { whatsapp: '🟢 WhatsApp', sms: '✉ SMS', voice: '🎙 Voice note', missed_call: '📞 Missed call', ivr: '☎ IVR', web: '🌐 Web', helpline: '🚨 112', volunteer: '🙋 Volunteer', proactive: '🔔 Auto-call' }
 
 // Incident details as a pop-up over the dashboard. Esc, × or a click outside closes it.
@@ -78,7 +80,11 @@ export default function IncidentPanel({ id, state, onClose, version }) {
       <h2>{i.title}</h2>
     </div>
 
-    <div className="inext">👉 <b>Next step:</b> {ACTION_LABEL[i.action] || i.action}</div>
+    <div className="inext">👉 <b>Next step:</b> {
+      active.some((a) => a.status !== 'done')
+        ? `${active.filter((a) => a.status !== 'done').map((a) => tname(a.team_id)).join(', ')} is on the job: follow its updates (or enter them below if the team calls by radio)`
+        : i.status === 'resolved' ? 'Done: case resolved' : i.status === 'false' ? 'Closed: marked as a false report'
+        : ACTION_LABEL[i.action] || i.action}</div>
     {err && <div className="err">{err}</div>}
 
     <div className="tiles">
@@ -125,14 +131,56 @@ export default function IncidentPanel({ id, state, onClose, version }) {
               </div>
             </div>
           ))}
+          {active.filter((a) => a.status !== 'done').map((a) => (
+            <div key={`radio-${a.id}`} className="radio-box">
+              <div className="radio-head">📻 Team called by radio / phone? Enter it for them</div>
+              <div className="radio-btns">
+                {RADIO.filter(([s]) => !(s === 'en_route' && a.status !== 'approved') && !(s === 'reached' && a.status === 'on_scene')).map(([s, label]) => (
+                  <button key={s} className={s === 'no_one_here' ? 'danger' : s === 'rescued' ? 'ok-btn' : ''}
+                    onClick={() => (s !== 'no_one_here' || confirm('Team found no one there? The report will be marked false.'))
+                      && sendTeamStatus(a.team_id, s, a.id, label)}>{label}</button>
+                ))}
+              </div>
+              <div className="muted small">Saved as "entered by operator via radio" in the log. If the team's own phone sends the same later, it is skipped.</div>
+            </div>
+          ))}
         </section>
 
         <section className="ibox">
           <h4>🔎 Is it real? <span className="muted small">(never lowers urgency)</span></h4>
-          <div className="conf-line"><b style={{ color: confColor }}>{confWord}</b> <span className="muted">{conf}%</span></div>
+          <div className="conf-line"><b style={{ color: confColor }}>{confWord}</b> <span className="muted">· trust score {conf} / 100</span></div>
           <div className="meter"><div style={{ width: `${conf}%`, background: confColor }} /></div>
-          {i.red_flags.length > 0 && <ul className="flags">{i.red_flags.map((f) => <li key={f} title={f}>⚑ {flagText(f)}</li>)}</ul>}
-          <details className="small"><summary>How this was worked out</summary><ul>{i.confidence_reasons.map((r) => <li key={r}>{r}</li>)}</ul></details>
+
+          {i.red_flags.length > 0 && (
+            <div className="fakebox">
+              <div className="fakebox-head">⚠️ Why we think this may be fake</div>
+              {i.red_flags.map((f) => {
+                const x = explainFlag(f, i, state.area)
+                return (
+                  <div key={f} className="fakereason">
+                    <span className="fakereason-icon">{x.icon}</span>
+                    <div><b>{x.title}</b><p>{x.why}</p></div>
+                  </div>
+                )
+              })}
+              <div className="fakebox-foot">
+                <b>What RAHAT does:</b> the case is <b>not deleted</b> and its <b>urgency is not lowered</b>.
+                No team is suggested until someone checks it. If the caller confirms, trust jumps to 90+.
+              </div>
+            </div>
+          )}
+
+          <div className="steps-trust">
+            <div className="steps-trust-head">How the trust score was worked out</div>
+            {trustSteps(i.confidence_reasons).map((s, k) => (
+              <div key={k} className={`ts ${s.delta > 0 ? 'up' : s.delta < 0 ? 'down' : ''}`}>
+                <span className="ts-n">{s.start ? s.value : s.delta != null ? `${s.delta > 0 ? '+' : '−'}${Math.abs(s.delta)}` : s.set || '·'}</span>
+                <span className="ts-t">{s.text}</span>
+              </div>
+            ))}
+            <div className="ts total"><span className="ts-n">= {conf}</span><span className="ts-t">final trust score{i.confidence <= 0.02 ? ' (lowest possible)' : ''}</span></div>
+            <div className="muted small">Rule-based score, not a tested probability.</div>
+          </div>
           <div className="row"><span>☎ Phone check: <b>{CALLBACK_TEXT[i.callback.status] || i.callback.status}</b></span></div>
           <div className="row">
             <button onClick={() => verify('confirmed')}>✓ Caller confirmed</button>
@@ -163,8 +211,14 @@ export default function IncidentPanel({ id, state, onClose, version }) {
           <div className="ichat">
             {d.messages.map((m) => (
               <div key={m.id} className="ibubble">
-                <div className="ibubble-meta">{CHANNEL_ICON[m.channel] || m.channel} · sender {m.sender_hash.slice(0, 6)} · {fmtTime(m.received_at)}</div>
-                <div>{m.raw_text || <i>(no text)</i>}</div>
+                <div className="ibubble-meta">{m.audio_url ? '🎙 Voice note' : CHANNEL_ICON[m.channel] || m.channel} · sender {m.sender_hash.slice(0, 6)} · {fmtTime(m.received_at)}</div>
+                <div>{m.raw_text || <i>{m.audio_url ? '(could not turn it into text: please listen)' : '(no text)'}</i>}</div>
+                {m.audio_url && (
+                  <div className="voice">
+                    <audio controls preload="none" src={`${API}/messages/${m.id}/audio`} />
+                    {m.meta?.transcribed_by && <span className="voice-by">text by {m.meta.transcribed_by.split(':')[0]}: please listen if unsure</span>}
+                  </div>
+                )}
               </div>
             ))}
             {i.followup_question && <div className="ibubble ours"><div className="ibubble-meta">RAHAT asked</div>{i.followup_question}</div>}
@@ -175,10 +229,15 @@ export default function IncidentPanel({ id, state, onClose, version }) {
         <section className="ibox">
           <h4>📋 Official SOP checklist</h4>
           {!cl ? <div className="muted">…</div> : cl.status !== 'OK' ? (
-            <div className="sop-miss">{cl.message}{cl.sop_loaded === 0 && <div className="muted small">No SOP documents loaded yet (data/sop/).</div>}</div>
-          ) : (
+            <div className="sop-miss">{cl.message}
+              {cl.why && <div className="small">{cl.why}</div>}
+              {cl.sop_loaded === 0 && <div className="muted small">No SOP documents loaded yet: run  python -m rag.fetch_sop</div>}</div>
+          ) : (<>
             <ol className="checklist">{cl.items.map((it, n) => <li key={n}>{it.text} <span className="src">[{it.source}]</span></li>)}</ol>
-          )}
+            <div className="muted small sop-note">Every step is copied from an official document (section + page shown), nothing is written by AI from memory.{' '}
+              {(cl.documents || []).map((d, k) => <span key={k}>{k ? ' · ' : 'Sources: '}<a href={d.url} target="_blank" rel="noreferrer">{d.title?.split(':').pop().trim()} ({d.year})</a></span>)}
+            </div>
+          </>)}
         </section>
       </div>
     </div>

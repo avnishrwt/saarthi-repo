@@ -78,7 +78,29 @@ memory only, to send replies; the database stores only the hashed id.
 
 ## Before the pitch (still open)
 - **Gemini model**: default `gemini-3.1-flash-lite` (6/6 demo messages correct, 1–4 s each, tested 31 Oct). `gemini-2.5-flash` is closed to new keys. Still test 2–3 models on the 20 Hinglish messages (brief decision #1); free-tier rate limits may slow a 200-message burst, and the system then falls back to rules for the failed calls.
-- **SOP documents**: put OFFICIAL NDMA text in `data/sop/`. It is empty now, so every checklist says "Not in SOP, escalate to officer". We never generate guidance from memory.
-- **Speech-to-text**: `RAHAT_STT=faster_whisper` or Bhashini; test on real Hinglish voice notes. Until then voice notes go to human review (never dropped).
+- **SOP documents**: two official NDMA guidelines are used (listed in `data/sop/sources.json`): *Management of Floods* (2008, Chapter 8 Flood Response) and *Management of Urban Flooding* (2010, Chapter 7). The PDFs are not in git; download them once with `.\.venv\Scripts\python -m rag.fetch_sop`. Every checklist step is copied from a response-chapter passage and shows section + PDF page; hazards the documents do not cover (fire, landslide, collapse) return "Not in SOP, escalate to officer". These are policy-level guidelines: they cover medical response and relief camps well, but contain few field-level boat-rescue steps. Add official SDRF/NDRF field SOPs to improve that. We never generate guidance from memory.
+- **Speech-to-text**: voice notes (WhatsApp OGG, browser WebM via ffmpeg, WAV/MP3) are transcribed by Gemini (`RAHAT_STT=gemini`, default when the Gemini key is set; `faster_whisper` and `none` also available), then go through the same extractor. The operator can play the original in the case pop-up. Tested only with a synthetic computer voice so far: test on real Hinglish/Garhwali voice notes before quoting accuracy. If transcription fails the note goes to human review (never dropped).
 - **200 labelled messages**: human-written (`data/labelled_messages_TEMPLATE.csv`). Do not use AI-generated messages for evaluation.
+
+## Evaluation
+`evaluation/evaluate.py` replays a labelled CSV through the real pipeline (throw-away DB, clock set to each message's time) and scores it against the labels:
+
+| Part | What is measured |
+|---|---|
+| Extraction | place correct / **wrong place** / missed, need found, people count, vulnerable groups, help vs noise |
+| Merging | message pairs about the same real case that end up in one incident (pairwise P/R/F1) |
+| Urgency | band per real case, critical recall, **under-triage** (critical/high shown as medium/low) |
+| Fake detection | precision, recall, and **real cases wrongly flagged** |
+| Team plan | RAHAT vs greedy on the final cases (longest critical wait, critical reached within 15 min) |
+
+```powershell
+# 1. Write the messages in data/labelled_messages_locked.csv (same columns as the template; gitignored).
+#    split=tune for messages you may look at while improving rules/prompts, split=test for the final number.
+# 2. Baseline (rules only, no API calls):
+.\.venv\Scripts\python -m evaluation.evaluate --split test
+# 3. Rules vs LLM side by side (uses the Gemini key, ~1 call per message):
+.\.venv\Scripts\python -m evaluation.evaluate --split test --extractor both
+```
+Each run prints a report with `(hits/n)` next to every number and saves JSON in `evaluation/results/`.
+Rules: human-written messages only; quote only the `test` split; with ~200 messages one case moves a percentage by about 0.5 points, so give n with every number. The template rows are examples written alongside the demo, so a 100% there means nothing.
 - Not built: role-based login, auto-delete after closure, ledger (stretch). Say "future scope".
