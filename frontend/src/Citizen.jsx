@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { api, fmtTime } from './api.js'
+import { api, fmtTime, toast, errText, CALLBACK_TEXT } from './api.js'
+import Toasts from './Toasts.jsx'
 
 // Citizen simulator (brief section 5): phone-shaped page for live demo moments.
 // Everything hits the same API as a real SMS gateway / 112 feed would.
@@ -18,6 +19,8 @@ export default function Citizen() {
   const [text, setText] = useState('')
   const [inbox, setInbox] = useState([])
   const [log, setLog] = useState([])
+  const [sent, setSent] = useState([])          // this phone's own messages, shown as chat bubbles
+  const chatEnd = useRef(null)
   const [state, setState] = useState(null)
   const [ivrPlace, setIvrPlace] = useState('RISPANA_BRIDGE')
   const [rec, setRec] = useState(null)
@@ -32,14 +35,22 @@ export default function Citizen() {
 
   const send = async (t = text, s = sender, c = channel) => {
     if (!t.trim()) return
-    const r = await api('/messages', { body: { channel: c, sender_id: s, raw_text: t } })
-    note(`sent ${r.id} (${c}) from ${s}`)
-    setText('')
+    try {
+      const r = await api('/messages', { body: { channel: c, sender_id: s, raw_text: t } })
+      setSent((xs) => [...xs, { sender: s, text: t, at: new Date().toISOString(), mine: true }])
+      note(`sent ${r.id} (${c}) from ${s}`)
+      if (s === sender) setText('')
+    } catch (e) { toast(errText(e), 'error') }
   }
+  // one tap: switch to that person's phone and send their message
   const preset = (p) => {
     const s = p.sender === 'RANDOM' ? rnd() : p.sender
-    setSender(s); setChannel(p.channel); setText(p.text)
+    setSender(s); setChannel(p.channel); setText('')
+    send(p.text, s, p.channel)
   }
+  const chat = [...sent.filter((m) => m.sender === sender), ...inbox.map((m) => ({ ...m, mine: false }))]
+    .sort((x, y) => new Date(x.at) - new Date(y.at))
+  useEffect(() => { chatEnd.current?.scrollIntoView({ block: 'nearest' }) }, [chat.length])
   const fakeBurst = async () => {
     for (let k = 0; k < 6; k++) await send('URGENT 50 log phase hai Har ki Pauri pe', rnd(), 'sms')
   }
@@ -65,31 +76,46 @@ export default function Citizen() {
   return (
     <div className="citizen">
       <div className="phone">
-        <div className="phone-top">Citizen phone <span className="muted small">(simulated)</span></div>
-        <label className="small">From <input value={sender} onChange={(e) => setSender(e.target.value)} /></label>
-        <div className="row">
-          <select value={channel} onChange={(e) => setChannel(e.target.value)}>
-            <option value="sms">SMS</option><option value="whatsapp">WhatsApp</option><option value="helpline">112 transcript</option>
-          </select>
-          <button onClick={() => setSender(rnd())}>new number</button>
+        <div className="phone-top">📱 Citizen phone <span className="muted small">(simulated)</span></div>
+        <div className="chat-head">
+          <div className="chat-avatar">R</div>
+          <div><b>RAHAT Helpline</b><div className="small muted">from {sender}</div></div>
         </div>
-        <textarea rows={4} placeholder="Type any Hinglish / Hindi / English message…" value={text} onChange={(e) => setText(e.target.value)} />
-        <button className="primary wide" onClick={() => send()}>Send</button>
+        <div className="chat">
+          {chat.length === 0 && <div className="chat-empty">Type a message for help, or tap an example below.</div>}
+          {chat.map((m, k) => (
+            <div key={k} className={`bubble ${m.mine ? 'mine' : 'theirs'}`}>{m.text}<span>{fmtTime(m.at)}</span></div>
+          ))}
+          <div ref={chatEnd} />
+        </div>
+        <div className="composer">
+          <textarea rows={2} placeholder="Type in Hinglish / Hindi / English…  (Enter = send)" value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} />
+          <button className="send-btn" onClick={() => send()} aria-label="send">➤</button>
+        </div>
+        <div className="small muted" style={{ marginTop: 8 }}>Quick examples (one tap sends):</div>
         <div className="presets">{PRESETS.map((p) => <button key={p.label} onClick={() => preset(p)}>{p.label}</button>)}</div>
+        <details className="small"><summary>Phone settings</summary>
+          <label className="small">Number <input value={sender} onChange={(e) => setSender(e.target.value)} /></label>
+          <div className="row">
+            <select value={channel} onChange={(e) => setChannel(e.target.value)}>
+              <option value="sms">SMS</option><option value="whatsapp">WhatsApp</option><option value="helpline">112 transcript</option>
+            </select>
+            <button onClick={() => setSender(rnd())}>New number</button>
+          </div>
+        </details>
         <div className="row">
           {rec ? <button className="danger" onClick={() => { rec.stop(); setRec(null) }}>Stop + send voice note</button>
             : <button onClick={startRec}>Record voice note</button>}
           <label className="upload">Upload audio<input type="file" accept="audio/*" onChange={(e) => e.target.files[0] && upload(e.target.files[0], e.target.files[0].name)} /></label>
         </div>
-        <h4>Inbox (replies from RAHAT)</h4>
-        <div className="inbox">
-          {inbox.length === 0 ? <div className="muted small">No messages yet.</div> :
-            inbox.map((m, k) => <div key={k} className="sms"><span className="muted small">{fmtTime(m.at)} · {m.channel}</span><div>{m.text}</div></div>)}
-        </div>
       </div>
 
       <div className="simcol">
+        <p><a href="#/">← Back to control room</a></p>
         <h3>Simulated calls</h3>
+        <p className="muted small">For people without smartphones: a missed call or keypad answer also becomes a case.</p>
         <div className="row">
           <button onClick={() => api('/sim/missed_call', { body: { sender_id: sender } }).then(() => note('missed call -> IVR callback placed'))}>Missed call from this number</button>
         </div>
@@ -101,30 +127,32 @@ export default function Citizen() {
           {[['1', 'rescue'], ['2', 'medical'], ['3', 'food']].map(([d, n]) =>
             <button key={d} onClick={() => api('/sim/ivr', { body: { sender_id: sender, digit: d, place_id: ivrPlace } }).then(() => note(`IVR pressed ${d} (${n})`))}>Press {d}: {n}</button>)}
         </div>
-        <button onClick={fakeBurst}>Send fake from 6 new numbers</button>
+        <p><button onClick={fakeBurst}>Send a fake message from 6 new numbers</button> <span className="muted small">shows how RAHAT flags copy-paste fakes</span></p>
 
-        <h3>Proactive check (opt-in vulnerable list)</h3>
+        <h3>Calls to registered elderly residents</h3>
+        <p className="muted small">After a flood alert RAHAT calls people on the opt-in list. "No answer" creates a case.</p>
         <button onClick={() => api('/sim/proactive/start', { body: {} }).then(() => note('proactive calls started'))}>Start calls</button>
         {(state?.residents || []).map((r) => (
           <div key={r.id} className="row">
             <span>{r.name}, {r.age}, {r.area}: <b>{r.last_check_result || '-'}</b></span>
-            {['no_answer', 'ok', 'need_help'].map((res) =>
-              <button key={res} onClick={() => api(`/sim/proactive/${r.id}`, { body: { result: res } }).then(() => note(`${r.name}: ${res}`))}>{res}</button>)}
+            {[['no_answer', 'No answer'], ['ok', 'Says OK'], ['need_help', 'Needs help']].map(([res, label]) =>
+              <button key={res} onClick={() => api(`/sim/proactive/${r.id}`, { body: { result: res } }).then(() => note(`${r.name}: ${label}`))}>{label}</button>)}
           </div>
         ))}
 
-        <h3>Pending callbacks</h3>
-        {callbacks.length === 0 && <div className="muted small">none</div>}
+        <h3>Verification calls waiting</h3>
+        {callbacks.length === 0 && <div className="muted small">None right now.</div>}
         {callbacks.map((i) => (
           <div key={i.id} className="row">
             <span className="small"><b>{i.id}</b> {i.title}</span>
             {['confirmed', 'no_answer', 'denied'].map((res) =>
-              <button key={res} onClick={() => api(`/incidents/${i.id}/verify`, { body: { result: res, by: 'callback' } }).then(() => note(`${i.id} callback: ${res}`))}>{res}</button>)}
+              <button key={res} onClick={() => api(`/incidents/${i.id}/verify`, { body: { result: res, by: 'callback' } }).then(() => note(`${i.id}: ${CALLBACK_TEXT[res]}`))}>{CALLBACK_TEXT[res]}</button>)}
           </div>
         ))}
-        <h3>Log</h3>
+        <h3>What happened</h3>
         <div className="small mono">{log.map((l, k) => <div key={k}>{l}</div>)}</div>
       </div>
+      <Toasts />
     </div>
   )
 }

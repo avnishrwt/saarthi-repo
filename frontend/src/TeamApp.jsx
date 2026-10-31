@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { api, useLive, BAND_COLOR } from './api.js'
+import { api, useLive, toast, errText, BAND_COLOR, BAND_NAME, NEED_TEXT, TEAM_ICON, VULN_TEXT, flagText } from './api.js'
 import RouteMap from './RouteMap.jsx'
+import Toasts from './Toasts.jsx'
 
 // Field team PWA (FR12). Offline-first: last assignment cached in localStorage,
 // status taps queued locally and synced when the network returns.
@@ -8,34 +9,61 @@ const QKEY = 'rahat.queue', TKEY = 'rahat.team', CKEY = 'rahat.cache.'
 const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d } catch { return d } }
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch { /* private mode */ } }
 
+// Field buttons: English + Hindi, big enough for wet hands.
+const STATUS = {
+  en_route: { en: 'On the way', hi: 'रास्ते में', icon: '🚤' },
+  reached: { en: 'Reached', hi: 'पहुँच गए', icon: '📍' },
+  rescued: { en: 'Rescued / Delivered', hi: 'बचा लिया / सामान दे दिया', icon: '✅' },
+  need_backup: { en: 'Need backup', hi: 'और मदद चाहिए', icon: '🆘' },
+  no_one_here: { en: 'No one here', hi: 'यहाँ कोई नहीं', icon: '✗' },
+}
+// The one next step for each assignment status; everything else is secondary.
+const NEXT = { approved: 'en_route', en_route: 'reached', on_scene: 'rescued' }
+const STEPS = [['approved', 'Assigned'], ['en_route', 'On the way'], ['on_scene', 'Reached'], ['done', 'Done']]
+
 export default function TeamApp() {
   const [teams, setTeams] = useState([])
-  const [teamId, setTeamId] = useState(load(TKEY, ''))
+  // per-team link: #/team?id=BOAT-A opens that team directly (and remembers it)
+  const [teamId, setTeamId] = useState(() => {
+    const fromLink = new URLSearchParams(location.hash.split('?')[1] || '').get('id')
+    if (fromLink) save(TKEY, fromLink)
+    return fromLink || load(TKEY, '')
+  })
   const [data, setData] = useState(null)
   const [queue, setQueue] = useState(load(QKEY, []))
   const [online, setOnline] = useState(navigator.onLine)
   const [ticks, setTicks] = useState({})
   const [tab, setTab] = useState('assignment')
+  const lastAsg = useRef(null)
 
   const refresh = useCallback(() => {
     api('/teams').then(setTeams).catch(() => {})
     if (!teamId) return
     api(`/teams/${teamId}/assignment`)
-      .then((d) => { setData(d); save(CKEY + teamId, d); setOnline(true) })
+      .then((d) => {
+        const id = d?.assignment?.id || null
+        if (id && lastAsg.current !== null && id !== lastAsg.current) {
+          toast(`New job: ${d.incident.title}`, 'crit')
+          navigator.vibrate?.([200, 100, 200])
+        }
+        lastAsg.current = id
+        setData(d); save(CKEY + teamId, d); setOnline(true)
+      })
       .catch(() => { setOnline(false); setData(load(CKEY + teamId, null)) })
   }, [teamId])
   useLive(refresh)
-  useEffect(() => { refresh() }, [teamId, refresh])
+  useEffect(() => { lastAsg.current = null; refresh() }, [teamId, refresh])
 
   const flush = useCallback(async () => {
     let q = load(QKEY, [])
     while (q.length) {
       const u = q[0]
       try { await api(`/teams/${u.team_id}/status`, { method: 'PATCH', body: { status: u.status, client_ts: u.client_ts } }) }
-      catch { setOnline(false); break }
+      catch { setOnline(false); return false }
       q = q.slice(1); save(QKEY, q); setQueue(q)
     }
-    if (!q.length) refresh()
+    refresh()
+    return true
   }, [refresh])
   useEffect(() => {
     const on = () => { setOnline(true); flush() }, off = () => setOnline(false)
@@ -64,60 +92,100 @@ export default function TeamApp() {
   }
   useEffect(() => () => watchId != null && navigator.geolocation.clearWatch(watchId), [watchId])
 
-  const tap = (status) => {
+  const tap = async (status) => {
+    if (status === 'no_one_here' && !confirm('Nobody at this location? The report will be marked false.')) return
     const q = [...load(QKEY, []), { team_id: teamId, status, client_ts: new Date().toISOString() }]
-    save(QKEY, q); setQueue(q); flush()
+    save(QKEY, q); setQueue(q)
+    const ok = await flush()
+    toast(ok ? `✓ Sent: ${STATUS[status].en}` : `Saved on phone: "${STATUS[status].en}" will send when the network is back`, ok ? 'ok' : 'info')
   }
+  const pickTeam = (id) => { setTeamId(id); save(TKEY, id); setData(null) }
 
-  const a = data?.assignment, inc = data?.incident, cl = data?.checklist
+  const a = data?.assignment, inc = data?.incident, cl = data?.checklist, me = teams.find((t) => t.id === teamId)
+  const next = a && NEXT[a.status]
+  const stepIdx = a ? STEPS.findIndex(([k]) => k === a.status) : -1
+
   return (
     <div className="phone-app">
       <header className="tbar">
         <b>RAHAT Team</b>
-        <select value={teamId} onChange={(e) => { setTeamId(e.target.value); save(TKEY, e.target.value) }}>
-          <option value="">Select team…</option>
-          {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-        </select>
+        {me && <span className="tme">{TEAM_ICON[me.type]} {me.name}</span>}
+        {teamId && <button className="light small-btn" onClick={() => pickTeam('')}>Change team</button>}
       </header>
-      {!online && <div className="offline">Offline: showing last saved assignment. {queue.length} update(s) will sync.</div>}
-      {online && queue.length > 0 && <div className="offline">Syncing {queue.length} update(s)…</div>}
+      {!online && <div className="offline">📴 Offline: showing the last saved job. {queue.length} update(s) will send automatically.</div>}
+      {online && queue.length > 0 && <div className="offline">Sending {queue.length} update(s)…</div>}
       <nav className="tabs">
-        <button className={tab === 'assignment' ? 'on' : ''} onClick={() => setTab('assignment')}>Assignment</button>
+        <button className={tab === 'assignment' ? 'on' : ''} onClick={() => setTab('assignment')}>My job</button>
         <button className={tab === 'volunteer' ? 'on' : ''} onClick={() => setTab('volunteer')}>Report for someone</button>
       </nav>
-      {tab === 'volunteer' ? <Volunteer /> : !teamId ? <p className="pad">Pick your team above.</p> : !a ? (
-        <p className="pad">No assignment. Stay on standby; this screen updates by itself.
-          {data?.team && <><br /><span className="muted">Status: {data.team.status}</span></>}</p>
+
+      {tab === 'volunteer' ? <Volunteer /> : !teamId ? (
+        <div className="pad">
+          <h3>Which team are you?</h3>
+          <p className="muted">Tap your team once. The phone remembers it.</p>
+          <div className="team-pick">
+            {teams.map((t) => (
+              <button key={t.id} onClick={() => pickTeam(t.id)}>
+                <span className="tp-icon">{TEAM_ICON[t.type] || '⛑'}</span>
+                <b>{t.name}</b>
+                <span className={`tp-status tp-${t.status}`}>{t.status}</span>
+              </button>
+            ))}
+          </div>
+          {teams.length === 0 && <div className="muted">Loading teams… (is the server running?)</div>}
+        </div>
+      ) : !a ? (
+        <div className="pad standby">
+          <div className="standby-icon">🕓</div>
+          <h3>No job right now</h3>
+          <p>Stay ready. When the control room sends you, the job appears here by itself and the phone vibrates.</p>
+          {data?.team && <p className="muted">Your status: <b>{data.team.status}</b></p>}
+        </div>
       ) : (
         <div className="pad">
-          <div className="card">
-            <span className="badge" style={{ background: BAND_COLOR[inc.band] }}>{inc.band}</span> <b>{inc.id}</b>
-            <span className="muted"> · {a.status}</span>
+          <ol className="steps">
+            {STEPS.map(([k, label], n) => <li key={k} className={n < stepIdx ? 'done' : n === stepIdx ? 'now' : ''}>{label}</li>)}
+          </ol>
+
+          <div className="card job" style={{ borderLeftColor: BAND_COLOR[inc.band] }}>
+            <span className="badge" style={{ background: BAND_COLOR[inc.band] }}>{BAND_NAME[inc.band]}</span>
             <h3>{inc.title}</h3>
-            <div>People: <b>{inc.people_count ?? 'unknown'}{inc.people_estimated ? ' (est.)' : ''}</b></div>
-            <div>Vulnerable: <b>{inc.vulnerable.join(', ') || 'none reported'}</b></div>
-            <div>Hazard: <b>{inc.hazard_detail || inc.hazard || 'none reported'}</b></div>
-            <div>ETA: <b>{Math.round(a.eta_min)} min</b></div>
-            {inc.red_flags.length > 0 && <div className="flags small">⚑ Unverified report: {inc.red_flags[0]}</div>}
+            <div className="job-grid">
+              <div><span>People</span><b>{inc.people_count ?? 'unknown'}{inc.people_estimated ? ' (est.)' : ''}</b></div>
+              <div><span>Reach in</span><b>{Math.round(a.eta_min)} min</b></div>
+              <div><span>Vulnerable</span><b>{inc.vulnerable.map((v) => VULN_TEXT[v] || v).join(', ') || 'none reported'}</b></div>
+              <div><span>Needs</span><b>{inc.needs.map((n) => NEED_TEXT[n] || n).join(', ') || '-'}</b></div>
+              {(inc.hazard_detail || inc.water_depth_ft != null) && <div><span>Hazard</span><b>{inc.hazard_detail || `water ${inc.water_depth_ft} ft`}</b></div>}
+            </div>
+            {inc.red_flags.length > 0 && <div className="flags small">⚑ Not verified yet: {flagText(inc.red_flags[0])}</div>}
           </div>
+
+          {next && (
+            <button className="approve-btn approve-wide next-btn" onClick={() => tap(next)}>
+              {STATUS[next].icon} {STATUS[next].en}<span>{STATUS[next].hi}</span>
+            </button>
+          )}
+
           {inc.location.lat != null && <>
             <RouteMap team={data.team} incident={inc} myPos={myPos} />
             <div className="row">
-              <button onClick={toggleGps}>{watchId != null ? 'Stop sharing location' : 'Share my location'}</button>
+              <button onClick={toggleGps}>{watchId != null ? '⏹ Stop sharing location' : '📡 Share my location'}</button>
               <a className="route" href={`https://www.google.com/maps/dir/?api=1&destination=${inc.location.lat},${inc.location.lng}${data.team.type === 'boat' ? '' : '&travelmode=driving'}`} target="_blank" rel="noreferrer">
-                Navigate in Google Maps
+                🧭 Open in Google Maps
               </a>
             </div>
             {gpsErr && <div className="muted small">{gpsErr}</div>}
           </>}
+
           <div className="status-grid">
-            {a.status === 'approved' && <button onClick={() => tap('en_route')}>On the way</button>}
-            <button onClick={() => tap('reached')}>Reached</button>
-            <button className="primary" onClick={() => tap('rescued')}>Rescued / Delivered</button>
-            <button className="danger" onClick={() => tap('no_one_here')}>No one here</button>
-            <button onClick={() => tap('need_backup')}>Need backup</button>
+            {['rescued', 'need_backup', 'no_one_here'].filter((k) => k !== next).map((k) => (
+              <button key={k} className={k === 'no_one_here' ? 'danger' : ''} onClick={() => tap(k)}>
+                {STATUS[k].icon} {STATUS[k].en}<span>{STATUS[k].hi}</span>
+              </button>
+            ))}
           </div>
-          <h4>SOP checklist</h4>
+
+          <h4>Safety checklist (official SOP)</h4>
           {!cl || cl.status !== 'OK' ? <div className="sop-miss">{cl?.message || 'Not in SOP, escalate to officer'}</div> : (
             <ul className="checklist ticks">
               {cl.items.map((it, n) => (
@@ -130,40 +198,50 @@ export default function TeamApp() {
           )}
         </div>
       )}
+      <Toasts />
     </div>
   )
 }
 
+const EMPTY = { name: '', place: '', people: 1, needs: { trapped: true }, vul: {}, notes: '', lat: null, lng: null }
+
 function Volunteer() {
-  const [f, setF] = useState({ name: '', place: '', people: 1, needs: { trapped: true }, vul: {}, notes: '', lat: null, lng: null })
+  const [f, setF] = useState(EMPTY)
   const [places, setPlaces] = useState([])
-  const [done, setDone] = useState('')
+  const [sending, setSending] = useState(false)
   useEffect(() => { api('/state').then((s) => setPlaces(s.places.filter((p) => p.in_area))).catch(() => {}) }, [])
   const tog = (k, v) => setF({ ...f, [k]: { ...f[k], [v]: !f[k][v] } })
-  const gps = () => navigator.geolocation?.getCurrentPosition((p) => setF({ ...f, lat: p.coords.latitude, lng: p.coords.longitude }))
+  const gps = () => navigator.geolocation?.getCurrentPosition(
+    (p) => { setF({ ...f, lat: p.coords.latitude, lng: p.coords.longitude }); toast('Location added ✓', 'ok') },
+    (e) => toast(`GPS: ${e.message}`, 'error'))
   const submit = async () => {
+    if (!f.place && f.lat == null) { toast('Choose a place or tap "Use my GPS" first', 'error'); return }
     const place = places.find((p) => p.id === f.place)
     const words = [...Object.keys(f.needs).filter((k) => f.needs[k]), ...Object.keys(f.vul).filter((k) => f.vul[k])]
     const text = `[Volunteer report${f.name ? ' by ' + f.name : ''}] ${f.people} people at ${place ? place.name : 'pinned location'}, ${words.join(', ')}. ${f.notes}`
-    await api('/messages', { body: { channel: 'volunteer', sender_id: `volunteer-${f.name || 'anon'}`, raw_text: text,
-      lat: f.lat ?? place?.lat ?? null, lng: f.lng ?? place?.lng ?? null } })
-    setDone('Sent. The control room sees it as an incident.')
+    setSending(true)
+    try {
+      await api('/messages', { body: { channel: 'volunteer', sender_id: `volunteer-${f.name || 'anon'}`, raw_text: text,
+        lat: f.lat ?? place?.lat ?? null, lng: f.lng ?? place?.lng ?? null } })
+      toast('✓ Report sent. The control room sees it now.', 'ok')
+      setF({ ...EMPTY, name: f.name })
+    } catch (e) { toast(errText(e), 'error') } finally { setSending(false) }
   }
   return (
     <div className="pad form">
+      <p className="muted">Reporting for someone who can't send a message themselves (ASHA worker / volunteer).</p>
       <label>Your name <input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></label>
-      <label>Place <select value={f.place} onChange={(e) => setF({ ...f, place: e.target.value })}>
-        <option value="">choose…</option>{places.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+      <label>Where? <select value={f.place} onChange={(e) => setF({ ...f, place: e.target.value })}>
+        <option value="">choose a place…</option>{places.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
       </select></label>
-      <button onClick={gps}>Use my GPS {f.lat ? '✓' : ''}</button>
-      <label>People <input type="number" min="1" value={f.people} onChange={(e) => setF({ ...f, people: e.target.value })} /></label>
-      <fieldset><legend>Needs</legend>{['trapped', 'medical', 'food', 'drinking water', 'medicine'].map((n) =>
+      <button onClick={gps}>📡 Use my GPS {f.lat ? '✓' : ''}</button>
+      <label>How many people? <input type="number" min="1" value={f.people} onChange={(e) => setF({ ...f, people: e.target.value })} /></label>
+      <fieldset><legend>What do they need?</legend>{['trapped', 'medical', 'food', 'drinking water', 'medicine'].map((n) =>
         <label key={n} className="chk"><input type="checkbox" checked={!!f.needs[n]} onChange={() => tog('needs', n)} />{n}</label>)}</fieldset>
-      <fieldset><legend>Vulnerable</legend>{['elderly', 'child', 'disabled', 'pregnant', 'alone'].map((n) =>
+      <fieldset><legend>Anyone vulnerable?</legend>{['elderly', 'child', 'disabled', 'pregnant', 'alone'].map((n) =>
         <label key={n} className="chk"><input type="checkbox" checked={!!f.vul[n]} onChange={() => tog('vul', n)} />{n}</label>)}</fieldset>
-      <label>Notes <textarea value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></label>
-      <button className="primary" onClick={submit}>Send report</button>
-      {done && <div className="ok">{done}</div>}
+      <label>Anything else? <textarea value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></label>
+      <button className="approve-btn approve-wide" disabled={sending} onClick={submit}>{sending ? 'Sending…' : 'Send report'}</button>
     </div>
   )
 }
