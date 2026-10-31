@@ -518,3 +518,24 @@ button.light:hover { background: #f6f8fa; border-color: #c8d1db; }
 .legend-btn { font-size: 13px; padding: 7px 12px; }
 .poi-flood { font-size: 22px; }
 .poi-hospital span { width: 34px; height: 34px; font-size: 19px; }
+.wide-light { width: 100%; margin-top: 8px; padding: 9px; font-weight: 600; }
+
+/* ---------------- why it may be fake */
+.qflags { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 8px; font-size: 12px; }
+.qflags-label { font-weight: 700; color: #b54708; }
+.qflag { background: #fffaeb; border: 1px solid #fedf89; color: #93370d; border-radius: 8px; padding: 1px 8px; }
+.fakebox { margin: 12px 0 10px; border: 1px solid #fedf89; background: #fffcf5; border-radius: 10px; padding: 10px 12px; }
+.fakebox-head { font-weight: 800; color: #b54708; margin-bottom: 6px; }
+.fakereason { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; border-top: 1px dashed #fedf89; }
+.fakereason:first-of-type { border-top: 0; }
+.fakereason-icon { font-size: 18px; line-height: 1.3; }
+.fakereason p { margin: 2px 0 0; color: #475467; font-size: 13px; }
+.fakebox-foot { margin-top: 8px; font-size: 12.5px; color: #344054; background: #fff; border-radius: 8px; padding: 7px 9px; border: 1px solid #f2f4f7; }
+.steps-trust { margin: 8px 0 10px; background: #f9fafb; border: 1px solid #eaecf0; border-radius: 10px; padding: 8px 10px; }
+.steps-trust-head { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #667085; margin-bottom: 4px; }
+.ts { display: grid; grid-template-columns: 52px 1fr; gap: 8px; align-items: baseline; padding: 3px 0; font-size: 13px; }
+.ts-n { font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; color: #344054; }
+.ts.up .ts-n { color: #067647; }
+.ts.down .ts-n { color: #b42318; }
+.ts.total { border-top: 1px solid #eaecf0; margin-top: 3px; padding-top: 5px; }
+.ts.total .ts-t { font-weight: 700; }

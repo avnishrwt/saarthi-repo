@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { api, useLive, toast, errText, caseKind, KIND, BAND_COLOR, BAND_NAME, ASSIGN_TEXT, TEAM_ICON, VULN_TEXT, ago, fmtTime } from './api.js'
+import { api, useLive, toast, errText, caseKind, explainFlag, KIND, BAND_COLOR, BAND_NAME, ASSIGN_TEXT, TEAM_ICON, VULN_TEXT, ago, fmtTime } from './api.js'
 import Toasts from './Toasts.jsx'
 import MapView from './MapView.jsx'
 import IncidentPanel from './IncidentPanel.jsx'
@@ -101,14 +101,15 @@ export default function Dashboard() {
     run(api(`/assignments/${a.id}/approve`, { body: { action: 'approve', operator: 'operator-1' } }),
       `✓ ${teams[a.team_id]?.name || a.team_id} sent to: ${inc.title}. The sender gets an update.`).finally(() => setBusy(''))
   }
-  const startDemo = async () => {
+  const startDemo = async (scenario = 'demo_scenario.json', label = '18 messages arriving over the next ~10 s') => {
     try {
       await api('/sim/alert', { body: {} })
-      await api('/sim/replay', { body: { speed: 4 } })
-      toast('Demo started: flood alert received, 18 messages arriving over the next ~10 s…', 'ok')
+      await api('/sim/replay', { body: { speed: 4, scenario } })
+      toast(`Demo started: flood alert received, ${label}…`, 'ok')
       refresh()
     } catch (e) { toast(errText(e), 'error') }
   }
+  const startNight50 = () => startDemo('demo_scenario_dehradun50.json', '50 synthetic Dehradun messages arriving over ~50 s')
   const freeTeams = state.teams.filter((t) => t.status === 'free').length
   const jump = (key) => {
     setTab('cases'); setQ('')
@@ -135,7 +136,8 @@ export default function Dashboard() {
           <button className="light" onClick={() => api('/optimize/compare').then(setCmp).catch((e) => toast(errText(e), 'error'))}>Why RAHAT beats "nearest team"</button>
           <button className="light" onClick={() => setHelp(true)}>❓ How it works</button>
           <DemoMenu open={demoOpen} setOpen={setDemoOpen}>
-            <button onClick={() => demo(startDemo)}><b>▶ Start full demo</b> <span className="muted small">(alert + 18 messages)</span></button>
+            <button onClick={() => demo(() => startDemo())}><b>▶ Start full demo</b> <span className="muted small">(alert + 18 messages)</span></button>
+            <button onClick={() => demo(startNight50)}><b>▶ Dehradun night: 50 messages</b> <span className="muted small">(alert + synthetic set)</span></button>
             <button onClick={() => demo(() => run(api('/sim/alert', { body: {} }), 'Flood alert received (simulated IMD)'))}>Only the flood alert</button>
             <button onClick={() => demo(() => run(api('/sim/replay', { body: { speed: 4 } }), 'Replaying 18 demo messages…'))}>Only the message burst</button>
             <a href="#/citizen" target="_blank" rel="noreferrer">Citizen phone simulator ↗</a>
@@ -179,7 +181,8 @@ export default function Dashboard() {
             <div className="welcome">
               <h3>No open cases right now</h3>
               <p>New help messages appear here by themselves, sorted by what you need to do.</p>
-              <button className="approve-btn approve-wide" onClick={startDemo}>▶ Start full demo</button>
+              <button className="approve-btn approve-wide" onClick={() => startDemo()}>▶ Start full demo</button>
+              <button className="light wide-light" onClick={startNight50}>▶ Bigger demo: Dehradun night, 50 messages</button>
               <div className="welcome-or">or try it live</div>
               <ol>
                 <li>Send a WhatsApp message to the RAHAT number, e.g. <i>"Deep Nagar gali 3 mein dadi phasi hai, paani 5 feet"</i></li>
@@ -194,7 +197,7 @@ export default function Dashboard() {
               <h4><span className="gicon">{g.icon}</span>{g.title} <span className="count">{groups[g.key].length}</span></h4>
               <div className="hint">{g.hint}</div>
               {groups[g.key].map(({ i, act, rec }) => (
-                <Card key={i.id} i={i} act={act} rec={rec} teams={teams} place={placeName[i.location.place_id] || i.location.text}
+                <Card key={i.id} i={i} act={act} rec={rec} teams={teams} area={state.area} place={placeName[i.location.place_id] || i.location.text}
                   selected={sel === i.id} fresh={fresh.current.has(i.id)} onClick={() => setSel(i.id)} onApprove={approve} busy={busy} />
               ))}
             </section>
@@ -278,7 +281,7 @@ function HowItWorks({ onClose }) {
   )
 }
 
-function Card({ i, act, rec, teams, place, selected, fresh, onClick, onApprove, busy }) {
+function Card({ i, act, rec, teams, place, area, selected, fresh, onClick, onApprove, busy }) {
   const senders = new Set(i.sender_hashes).size
   // titles look like "6 people trapped - MAJRA": the place is shown separately, so drop the repeat
   const cut = place ? i.title.toLowerCase().lastIndexOf(` - ${place.toLowerCase()}`) : -1
@@ -301,7 +304,12 @@ function Card({ i, act, rec, teams, place, selected, fresh, onClick, onApprove, 
       <div className="qfacts">
         {facts.map(([icon, text, cls]) => <span key={icon} className={cls || ''}><em>{icon}</em>{text}</span>)}
       </div>
-      {i.confidence < 0.5 && <div className="qnote warn">May be fake · open to see why</div>}
+      {i.red_flags.length > 0 && (
+        <div className="qflags" title="Why RAHAT thinks this may be fake (open the case for details)">
+          <span className="qflags-label">May be fake:</span>
+          {i.red_flags.map((f) => { const x = explainFlag(f, i, area); return <span key={f} className="qflag">{x.icon} {x.short}</span> })}
+        </div>
+      )}
       {rec && !act && (
         <div className="qaction">
           <div className="qteam">

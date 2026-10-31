@@ -81,4 +81,26 @@ memory only, to send replies; the database stores only the hashed id.
 - **SOP documents**: put OFFICIAL NDMA text in `data/sop/`. It is empty now, so every checklist says "Not in SOP, escalate to officer". We never generate guidance from memory.
 - **Speech-to-text**: `RAHAT_STT=faster_whisper` or Bhashini; test on real Hinglish voice notes. Until then voice notes go to human review (never dropped).
 - **200 labelled messages**: human-written (`data/labelled_messages_TEMPLATE.csv`). Do not use AI-generated messages for evaluation.
+
+## Evaluation
+`evaluation/evaluate.py` replays a labelled CSV through the real pipeline (throw-away DB, clock set to each message's time) and scores it against the labels:
+
+| Part | What is measured |
+|---|---|
+| Extraction | place correct / **wrong place** / missed, need found, people count, vulnerable groups, help vs noise |
+| Merging | message pairs about the same real case that end up in one incident (pairwise P/R/F1) |
+| Urgency | band per real case, critical recall, **under-triage** (critical/high shown as medium/low) |
+| Fake detection | precision, recall, and **real cases wrongly flagged** |
+| Team plan | RAHAT vs greedy on the final cases (longest critical wait, critical reached within 15 min) |
+
+```powershell
+# 1. Write the messages in data/labelled_messages_locked.csv (same columns as the template; gitignored).
+#    split=tune for messages you may look at while improving rules/prompts, split=test for the final number.
+# 2. Baseline (rules only, no API calls):
+.\.venv\Scripts\python -m evaluation.evaluate --split test
+# 3. Rules vs LLM side by side (uses the Gemini key, ~1 call per message):
+.\.venv\Scripts\python -m evaluation.evaluate --split test --extractor both
+```
+Each run prints a report with `(hits/n)` next to every number and saves JSON in `evaluation/results/`.
+Rules: human-written messages only; quote only the `test` split; with ~200 messages one case moves a percentage by about 0.5 points, so give n with every number. The template rows are examples written alongside the demo, so a 100% there means nothing.
 - Not built: role-based login, auto-delete after closure, ledger (stretch). Say "future scope".

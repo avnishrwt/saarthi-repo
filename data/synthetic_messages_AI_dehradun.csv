@@ -1,0 +1,51 @@
+﻿msg_id,split,channel,sender_id,timestamp,raw_text,true_incident_id,location,need,people_count,vulnerable,urgency,is_fake
+S-001,tune,whatsapp,P01,2026-11-10T01:30:05,"Deep Nagar gali 4 me hamara ghar doob raha hai, nani ji 82 saal ki hai upar nahi chadh pa rahi, paani 4 feet",SC01,DEEP_NAGAR,rescue,1,elderly,critical,0
+S-002,tune,sms,P02,2026-11-10T01:31:40,deep nagar gali 4 ek buzurg aurat phasi hai paani bahut hai plz boat bhejo,SC01,DEEP_NAGAR,rescue,1,elderly,critical,0
+S-003,tune,whatsapp,P03,2026-11-10T01:33:10,"Nani ko bachao deepnagar gali no 4, ghar me paani ghus gaya",SC01,DEEP_NAGAR,rescue,1,elderly,critical,0
+S-004,tune,sms,P04,2026-11-10T01:34:00,"Majra me chhat pe 7 log hai, 2 chhote bacche bhi, paani badh raha hai",SC02,MAJRA,rescue,7,child,critical,0
+S-005,tune,whatsapp,P05,2026-11-10T01:36:20,majra wali gali me family chhat pe phasi hai bacche ro rahe hai,SC02,MAJRA,rescue,,child,critical,0
+S-006,tune,sms,P06,2026-11-10T01:37:00,Rispana pul ke paas 3 log paani me beh gaye ek ko pakad ke rakha hai jaldi,SC03,RISPANA_BRIDGE,rescue,3,,critical,0
+S-007,tune,whatsapp,P07,2026-11-10T01:38:30,"Dalanwala primary school me 35 log ruke hai, raat se khana nahi mila",SC04,DALANWALA,food,35,,medium,0
+S-008,tune,sms,P08,2026-11-10T01:39:10,"dalanwala school relief camp me paani ki bottle khatam, bacche bhi hai",SC04,DALANWALA,water,,child,medium,0
+S-009,tune,sms,P09,2026-11-10T01:40:00,"Kargi chowk ke paas mere papa ko heart attack aaya hai, ambulance nahi aa rahi",SC05,KARGI_CHOWK,medical,1,,critical,0
+S-010,tune,whatsapp,P10,2026-11-10T01:41:30,"Nehru colony me pregnant didi ko dard shuru ho gaya, bahar paani bhara hai",SC06,NEHRU_COLONY,medical,1,pregnant,critical,0
+S-011,tune,sms,P11,2026-11-10T01:42:05,kab tak barish rukegi koi batao,,,none,,,none,0
+S-012,tune,sms,P12,2026-11-10T01:43:00,Mothrowala road pe hum 4 log car me phase hai paani darwaze tak aa gaya,SC07,MOTHROWALA,rescue,4,,high,0
+S-013,tune,whatsapp,P13,2026-11-10T01:44:20,"main akeli hu 70 saal ki, kanwali gaon me ghar me ghutno tak paani",SC08,KANWALI,rescue,1,elderly;alone,high,0
+S-014,tune,sms,P14,2026-11-10T01:45:00,Paltan bazar me ek dukaan me aag lag gayi upar 2 log phase hai,SC09,PALTAN_BAZAR,rescue,2,,critical,0
+S-015,tune,whatsapp,P15,2026-11-10T01:45:40,paltan bazaar aag!! dhuan bahut hai log upar wali manzil pe,SC09,PALTAN_BAZAR,rescue,,,critical,0
+S-016,tune,sms,P16,2026-11-10T01:46:30,URGENT 100 log phase hai har ki pauri ghat pe turant NDRF bhejo,SC10,HAR_KI_PAURI,rescue,100,,critical,1
+S-017,tune,sms,P17,2026-11-10T01:46:38,URGENT 100 log phase hai har ki pauri ghat pe turant NDRF bhejo,SC10,HAR_KI_PAURI,rescue,100,,critical,1
+S-018,tune,sms,P18,2026-11-10T01:46:45,URGENT 100 log phase hai har ki pauri ghat pe turant NDRF bhejo,SC10,HAR_KI_PAURI,rescue,100,,critical,1
+S-019,tune,sms,P19,2026-11-10T01:46:51,URGENT 100 log phase hai har ki pauri ghat pe turant NDRF bhejo,SC10,HAR_KI_PAURI,rescue,100,,critical,1
+S-020,tune,sms,P20,2026-11-10T01:47:30,jaldi koi aao paani bhar gaya hai ghar me,SC11,,rescue,,,medium,0
+S-021,tune,whatsapp,P21,2026-11-10T01:48:10,"Clement Town ke upar pahadi pe landslide, 2 ghar mitti me dabe, log andar ho sakte hai",SC12,CLEMENT_TOWN,rescue,,,critical,0
+S-022,tune,sms,P22,2026-11-10T01:49:00,"ISBT pe 60-70 yatri phase hai, bus nahi chal rahi, khana chahiye",SC13,ISBT,food,70,,medium,0
+S-023,tune,sms,P23,2026-11-10T01:50:15,"ghanta ghar ke paas purani building gir gayi, neeche log dabe hai",SC14,CLOCK_TOWER,rescue,,,critical,0
+S-024,tune,whatsapp,P24,2026-11-10T01:51:00,"Doon hospital me dawai khatam, insulin chahiye 5 marizon ke liye",SC15,DOON_HOSPITAL,medicine,5,,high,0
+S-025,tune,sms,P25,2026-11-10T01:52:30,Prem Nagar me paani bhar gaya 10 log phase,SC16,,rescue,10,,high,0
+S-026,tune,sms,P26,2026-11-10T01:53:10,kya school kal band rahenge?,,,none,,,none,0
+S-027,tune,whatsapp,P27,2026-11-10T01:54:00,"दीप नगर गली 2 में पानी कमर तक, दो बच्चे और मां फंसे हैं",SC17,DEEP_NAGAR,rescue,3,child,critical,0
+S-028,tune,sms,P04,2026-11-10T01:55:20,majra 7 log chhat pe abhi tak koi nahi aaya!!,SC02,MAJRA,rescue,7,,critical,0
+S-029,tune,sms,P29,2026-11-10T01:56:00,Parade ground ke paas tent me 40 log hai kambal aur khana chahiye,SC18,PARADE_GROUND,food;shelter,40,,medium,0
+S-030,tune,whatsapp,P30,2026-11-10T01:57:10,"graphic era ke hostel ke neeche paani, 200 students andar safe hai par khana kal tak ka hai",SC19,GEHU,food,200,,low,0
+S-031,tune,sms,P31,2026-11-10T01:58:00,"rispana bridge ke paas jo log beh gaye unme se ek ko nikal liya, 2 abhi bhi paani me",SC03,RISPANA_BRIDGE,rescue,2,,critical,0
+S-032,tune,sms,P32,2026-11-10T01:59:30,koi helpline number hai kya,,,none,,,none,0
+S-033,tune,whatsapp,P33,2026-11-10T02:00:10,Dalanwala me light nahi hai aur dadi ka oxygen machine band ho gaya,SC20,DALANWALA,medical,1,elderly,critical,0
+S-034,tune,sms,P34,2026-11-10T02:01:00,"nehru colni gali 6 me 5 log first floor pe hai paani neeche tak, abhi theek hai",SC21,NEHRU_COLONY,rescue,5,,medium,0
+S-035,tune,sms,P35,2026-11-10T02:02:20,"mujhe aur meri wife ko nikalo mothrowala, hum dono 75+ hai",SC22,MOTHROWALA,rescue,2,elderly,high,0
+S-036,tune,whatsapp,P36,2026-11-10T02:03:00,"kanwali road pe naali ka paani ghar me, sab theek hai bas safai chahiye",,,none,,,none,0
+S-037,tune,sms,P37,2026-11-10T02:04:30,"Har ki pauri pe mera bhai phansa hai, wahan bhi paani badh raha",SC24,HAR_KI_PAURI,rescue,1,,high,0
+S-038,tune,sms,P38,2026-11-10T02:05:00,khana chahiye 6 log,SC25,,food,6,,medium,0
+S-039,tune,whatsapp,P39,2026-11-10T02:06:10,"Kargi chowk pe ek aadmi ka pair toot gaya gira hai sadak pe, khoon nikal raha",SC26,KARGI_CHOWK,medical,1,,high,0
+S-040,tune,sms,P40,2026-11-10T02:07:00,clock tower ke paas building giri hai neeche 3-4 log hai,SC14,CLOCK_TOWER,rescue,4,,critical,0
+S-041,tune,sms,P41,2026-11-10T02:08:15,"ISBT ke paas bachon ke liye doodh chahiye, 10 chhote bacche",SC13,ISBT,food,10,child,medium,0
+S-042,tune,whatsapp,P42,2026-11-10T02:09:00,"हमें मदद चाहिए, घर में पानी आ गया है",SC27,,rescue,,,medium,0
+S-043,tune,sms,P43,2026-11-10T02:10:00,Rispana pul toot gaya kya? koi update,,,none,,,none,0
+S-044,tune,sms,P44,2026-11-10T02:11:20,deep nagar gali 4 nani ab bhi phasi hai paani 5 feet ho gaya,SC01,DEEP_NAGAR,rescue,1,elderly,critical,0
+S-045,tune,whatsapp,P45,2026-11-10T02:12:00,"Majra mein ek ladka bijli ke taar se chipak gaya, behosh hai",SC28,MAJRA,medical,1,,critical,0
+S-046,tune,sms,P46,2026-11-10T02:13:30,"mothrowala me dawai ki dukaan band, BP ki dawai chahiye 2 buzurgon ko",SC29,MOTHROWALA,medicine,2,elderly,medium,0
+S-047,tune,sms,P47,2026-11-10T02:14:00,paltan bazar aag bujh gayi sab bahar aa gaye,SC09,PALTAN_BAZAR,none,,,critical,0
+S-048,tune,whatsapp,P48,2026-11-10T02:15:10,"GEHU ke paas 3 log nadi ke kinare phase, paani tez",SC30,GEHU,rescue,3,,critical,0
+S-049,tune,sms,P49,2026-11-10T02:16:00,"नेहरू कॉलोनी में बुजुर्ग दादा जी अकेले हैं, फोन नहीं उठा रहे",SC31,NEHRU_COLONY,rescue,1,elderly;alone,high,0
+S-050,tune,sms,P50,2026-11-10T02:17:30,"Dalanwala school camp me 35 log, ab bhi khana nahi aaya",SC04,DALANWALA,food,35,,medium,0

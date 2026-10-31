@@ -1,3 +1,8 @@
 msg_id,split,channel,sender_id,timestamp,raw_text,true_incident_id,location,need,people_count,vulnerable,urgency,is_fake
-M-0001,tune,whatsapp,P-001,2026-11-10T02:04:11,"Bhai Rampur gali 3 mein meri dadi phasi hai, paani 5 feet hai",INC-014,RAMPUR_G3,rescue,1,elderly,critical,0
-M-0002,tune,sms,P-002,2026-11-10T02:05:40,"rampur gali 3 old lady trapped plz",INC-014,RAMPUR_G3,rescue,1,elderly,critical,0
+M-0001,tune,whatsapp,P-001,2026-11-10T02:04:11,"Bhai Deep Nagar gali 3 mein meri dadi phasi hai, paani 5 feet hai",C-001,DEEP_NAGAR,rescue,1,elderly,critical,0
+M-0002,tune,sms,P-002,2026-11-10T02:05:40,"deep nagar gali 3 old lady trapped plz",C-001,DEEP_NAGAR,rescue,1,elderly,critical,0
+M-0003,tune,sms,P-003,2026-11-10T02:06:02,"Dalanwala school me 20 log hai khana aur paani chahiye",C-002,DALANWALA,food;water,20,,medium,0
+M-0004,tune,sms,P-004,2026-11-10T02:07:15,"URGENT 50 log phase hai Har ki Pauri pe",C-003,HAR_KI_PAURI,rescue,50,,medium,1
+M-0005,tune,sms,P-005,2026-11-10T02:07:18,"URGENT 50 log phase hai Har ki Pauri pe",C-003,HAR_KI_PAURI,rescue,50,,medium,1
+M-0006,tune,sms,P-006,2026-11-10T02:08:30,"kab tak barish rukegi?",,,none,,,none,0
+M-0007,tune,whatsapp,P-007,2026-11-10T02:09:44,"khana chahiye 4-5 log hai",C-004,,food,5,,medium,0

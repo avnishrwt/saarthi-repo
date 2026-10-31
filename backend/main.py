@@ -297,7 +297,14 @@ def sim_reset():
 
 @app.post("/sim/replay")
 async def sim_replay(body: ReplayIn):
-    data = json.loads((config.DATA_DIR / body.scenario).read_text(encoding="utf-8"))
+    # only demo scenario files from data/: the endpoint is reachable through the public tunnel
+    name = Path(body.scenario).name
+    if name != body.scenario or not name.startswith("demo_scenario") or not name.endswith(".json"):
+        raise HTTPException(400, "scenario must be a data/demo_scenario*.json file name")
+    path = config.DATA_DIR / name
+    if not path.exists():
+        raise HTTPException(404, f"no such scenario: {name}")
+    data = json.loads(path.read_text(encoding="utf-8"))
 
     async def run():
         t_prev = 0.0

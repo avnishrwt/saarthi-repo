@@ -130,3 +130,69 @@ export function caseKind(i) {
   if (n.has('welfare_check')) return KIND[10]
   return KIND[11]
 }
+
+// ---------------------------------------------------------------- "why might this be fake?"
+const toRad = (d) => (d * Math.PI) / 180
+export function kmBetween(a, b) {
+  const [la1, lo1] = a, [la2, lo2] = b
+  const x = Math.sin(toRad(la2 - la1) / 2) ** 2 + Math.cos(toRad(la1)) * Math.cos(toRad(la2)) * Math.sin(toRad(lo2 - lo1) / 2) ** 2
+  return 6371 * 2 * Math.asin(Math.sqrt(x))
+}
+
+// One red flag -> short label (cards, map) + plain explanation with the evidence (pop-up).
+export function explainFlag(flag, inc, area) {
+  const [key, rest = ''] = flag.split(/:\s*/, 2)
+  if (key === 'copy_paste_burst') {
+    const m = rest.match(/from (\d+) numbers within (\d+)s/)
+    const n = m ? m[1] : 'several', s = m ? Number(m[2]) : null
+    const span = s == null ? '' : s < 2 ? ' almost at the same moment' : ` within ${s} seconds`
+    return {
+      icon: '📋', short: `Same text from ${n} numbers${s == null ? '' : s < 2 ? ' at once' : ` in ${s} s`}`,
+      title: 'Same text from many numbers',
+      why: `Exactly the same words came from ${n} different phone numbers${span}. People in real trouble write in their own words; forwarded spam is identical.`,
+    }
+  }
+  if (key === 'out_of_area') {
+    const km = inc?.location?.lat != null && area ? Math.round(kmBetween([inc.location.lat, inc.location.lng], area.center)) : null
+    return {
+      icon: '📍', short: km ? `${km} km outside the flood area` : 'Outside the flood area',
+      title: 'Place is outside the flood area',
+      why: `${km ? `This place is about ${km} km from the centre of the affected area` : 'This place is outside the affected area'}${area ? `, and RAHAT covers ${area.radius_km} km around it` : ''}. A real emergency there belongs to another control room.`,
+    }
+  }
+  if (key === 'low_reputation_sender') return {
+    icon: '👤', short: 'Sender had false reports before', title: 'Sender had false reports before',
+    why: 'A team earlier went to a report from this number and found no one there.',
+  }
+  if (key === 'serial_reporter') return {
+    icon: '🔁', short: 'One number, many emergencies', title: 'One number, many different emergencies',
+    why: 'This number reported several unrelated emergencies at different places within 30 minutes.',
+  }
+  return { icon: '⚑', short: key, title: key, why: rest || flag }
+}
+
+// confidence_reasons from the backend -> score steps on a 0-100 scale: { delta, text }
+const STEP_TEXT = {
+  copy_paste_burst: 'Same text from many numbers', out_of_area: 'Place is outside the flood area',
+  low_reputation_sender: 'Sender had false reports before', serial_reporter: 'One number, many emergencies',
+}
+export function trustSteps(reasons) {
+  return (reasons || []).map((r) => {
+    let m = r.match(/^start neutral (\d\.\d+)/)
+    if (m) return { start: true, value: Math.round(parseFloat(m[1]) * 100), text: 'Every report starts here (one lone report is not treated as fake)' }
+    m = r.match(/^([+-])(\d\.\d+):\s*(.*)$/)
+    if (m) {
+      const delta = Math.round(parseFloat(m[2]) * 100) * (m[1] === '-' ? -1 : 1)
+      let text = m[3]
+      const f = text.match(/^red flag (\w+)/)
+      if (f) text = STEP_TEXT[f[1]] || f[1]
+      else text = text.replace(/^(\d+) independent senders$/, '$1 different people reported it independently')
+        .replace('known landmark inside affected area', 'Known place inside the flood area')
+        .replace('specific people count', 'Gives an exact number of people')
+      return { delta, text }
+    }
+    if (r.startsWith('callback/operator CONFIRMED')) return { set: '≥ 90', text: 'Confirmed by phone / operator' }
+    if (r.startsWith('callback said help not needed')) return { set: '≤ 15', text: 'Caller said no help is needed' }
+    return { note: true, text: r.replace(/\(.*\)/, '').trim() }
+  })
+}
