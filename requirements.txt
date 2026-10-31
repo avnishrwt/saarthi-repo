@@ -1,0 +1,17 @@
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+pydantic==2.14.2
+python-multipart
+python-dotenv
+httpx
+ortools==9.15.6755
+scikit-learn==1.9.1
+numpy==2.5.4
+langgraph==1.2.19
+google-genai==2.34.0
+anthropic==2.3.0
+pypdf
+pytest
+# optional:
+# sentence-transformers   (RAHAT_EMBEDDINGS=st)
+# faster-whisper          (RAHAT_STT=faster_whisper)

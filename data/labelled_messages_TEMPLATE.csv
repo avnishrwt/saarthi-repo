@@ -1,0 +1,3 @@
+msg_id,split,channel,sender_id,timestamp,raw_text,true_incident_id,location,need,people_count,vulnerable,urgency,is_fake
+M-0001,tune,whatsapp,P-001,2026-11-10T02:04:11,"Bhai Rampur gali 3 mein meri dadi phasi hai, paani 5 feet hai",INC-014,RAMPUR_G3,rescue,1,elderly,critical,0
+M-0002,tune,sms,P-002,2026-11-10T02:05:40,"rampur gali 3 old lady trapped plz",INC-014,RAMPUR_G3,rescue,1,elderly,critical,0

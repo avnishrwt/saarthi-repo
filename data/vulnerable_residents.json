@@ -1,0 +1,5 @@
+[
+  {"id": "VR-01", "name": "Kamla ji (fictional)", "area": "Masjid Wali Gali", "place_id": "MASJID_GALI", "lat": 30.3070, "lng": 78.0270, "phone": "+910000000101", "age": 80, "needs": ["elderly", "uses walking stick"], "lives_alone": true, "consent_at": "2026-06-01T10:00:00+05:30"},
+  {"id": "VR-02", "name": "Mohan ji (fictional)", "area": "Rampur Gali 5", "place_id": "RAMPUR_G5", "lat": 30.3088, "lng": 78.0318, "phone": "+910000000102", "age": 68, "needs": ["wheelchair user"], "lives_alone": false, "consent_at": "2026-06-03T10:00:00+05:30"},
+  {"id": "VR-03", "name": "Sushila ji (fictional)", "area": "Shivpuri Ghat", "place_id": "SHIVPURI_GHAT", "lat": 30.3010, "lng": 78.0420, "phone": "+910000000103", "age": 77, "needs": ["elderly", "diabetic"], "lives_alone": true, "consent_at": "2026-06-05T10:00:00+05:30"}
+]

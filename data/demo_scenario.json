@@ -1,0 +1,30 @@
+{
+  "_note": "DEMO-ONLY story messages (brief section 2). NOT the evaluation set: the 200 labelled messages must be human-written by the team (brief section 8). Senders are fake ids, never real numbers.",
+  "name": "flood_night",
+  "messages": [
+    {"t": 0,  "channel": "sms",      "sender": "S-food-1",  "text": "Rampur school mein 20 log ruke hai, khana aur peene ka paani khatam ho gaya"},
+    {"t": 4,  "channel": "whatsapp", "sender": "S-dadi-1",  "text": "Bhai Rampur gali 3 mein meri dadi phasi hai, paani 5 feet hai"},
+    {"t": 6,  "channel": "whatsapp", "sender": "S-noise-1", "text": "kab tak barish rukegi?"},
+    {"t": 9,  "channel": "sms",      "sender": "S-dadi-2",  "text": "rampur gali 3 old lady trapped plz"},
+    {"t": 12, "channel": "sms",      "sender": "S-nehru-1", "text": "NEHRU COLONY mein chhat pe 6 log phase hai bacche bhi hai paani badh raha hai"},
+    {"t": 15, "channel": "whatsapp", "sender": "S-dadi-3",  "text": "Gali no 3 Rampur, hamari dadi ji 80 saal ki hai, chhat pe nahi ja pa rahi, jaldi boat bhejo"},
+    {"t": 18, "channel": "sms",      "sender": "S-fake-01", "text": "URGENT 50 log phase hai Kalinagar bridge pe"},
+    {"t": 18, "channel": "sms",      "sender": "S-fake-02", "text": "URGENT 50 log phase hai Kalinagar bridge pe"},
+    {"t": 19, "channel": "sms",      "sender": "S-fake-03", "text": "URGENT 50 log phase hai Kalinagar bridge pe"},
+    {"t": 19, "channel": "sms",      "sender": "S-fake-04", "text": "URGENT 50 log phase hai Kalinagar bridge pe"},
+    {"t": 20, "channel": "sms",      "sender": "S-fake-05", "text": "URGENT 50 log phase hai Kalinagar bridge pe"},
+    {"t": 21, "channel": "whatsapp", "sender": "S-nehru-2", "text": "nehru colony roof pe family stuck, 2 kids, water rising fast pls help"},
+    {"t": 23, "channel": "sms",      "sender": "S-gandhi-1","text": "Gandhi Nagar mein papa ka pair toot gaya hai, khoon beh raha hai, ambulance bhejo"},
+    {"t": 26, "channel": "sms",      "sender": "S-vague-1", "text": "khana chahiye 4-5 log hai"},
+    {"t": 28, "channel": "whatsapp", "sender": "S-noise-2", "text": "bijli kab tak aayegi koi batao"},
+    {"t": 30, "channel": "sms",      "sender": "S-fake-06", "text": "URGENT 50 log phase hai Kalinagar bridge pe"},
+    {"t": 30, "channel": "sms",      "sender": "S-fake-07", "text": "URGENT 50 log phase hai Kalinagar bridge pe"},
+    {"t": 31, "channel": "sms",      "sender": "S-fake-08", "text": "URGENT 50 log phase hai Kalinagar bridge pe"}
+  ],
+  "live_moments": {
+    "_note": "Sent by hand from the citizen simulator during the demo, not in the burst.",
+    "ramesh_uncle": {"channel": "sms", "sender": "S-ramesh", "text": "main akela hu, 75 saal, ghar me paani aa gaya, sector 4 mandir ke peeche"},
+    "vague_reply":  {"channel": "sms", "sender": "S-vague-1", "text": "panchayat bhawan ke paas wali gali"},
+    "kamla_ji": {"resident_id": "VR-01", "result": "no_answer"}
+  }
+}

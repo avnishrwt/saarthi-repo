@@ -1,0 +1,12 @@
+[
+  {"id": "BOAT-A", "name": "Boat Team A", "type": "boat", "equipment": ["inflatable boat", "life jackets", "rope"], "capacity": 6, "lat": 30.312082, "lng": 78.043122},
+  {"id": "BOAT-B", "name": "Boat Team B", "type": "boat", "equipment": ["inflatable boat", "life jackets"], "capacity": 6, "lat": 30.306755, "lng": 78.056416},
+  {"id": "BOAT-C", "name": "Boat Team C", "type": "boat", "equipment": ["inflatable boat", "life jackets"], "capacity": 6, "lat": 30.2920, "lng": 78.0120},
+  {"id": "BOAT-D", "name": "Boat Team D", "type": "boat", "equipment": ["inflatable boat", "life jackets", "stretcher"], "capacity": 8, "lat": 30.3290, "lng": 78.0450},
+  {"id": "MED-1", "name": "Medical Van 1", "type": "medical", "equipment": ["first aid", "stretcher", "oxygen"], "capacity": 2, "lat": 30.3220, "lng": 78.0200},
+  {"id": "MED-2", "name": "Ambulance 2", "type": "medical", "equipment": ["first aid", "stretcher"], "capacity": 2, "lat": 30.3000, "lng": 78.0300},
+  {"id": "RELIEF-1", "name": "Relief Truck 1", "type": "relief", "equipment": ["food packets", "drinking water", "ORS"], "capacity": 50, "lat": 30.3180, "lng": 78.0320},
+  {"id": "RELIEF-2", "name": "Relief Truck 2", "type": "relief", "equipment": ["food packets", "blankets"], "capacity": 50, "lat": 30.3300, "lng": 78.0280},
+  {"id": "SDRF-1", "name": "SDRF Search & Rescue 1", "type": "search_rescue", "equipment": ["cutters", "ropes", "torches"], "capacity": 4, "lat": 30.3150, "lng": 78.0250},
+  {"id": "FIRE-1", "name": "Fire Tender 1", "type": "fire", "equipment": ["water tender", "breathing apparatus"], "capacity": 4, "lat": 30.3155, "lng": 78.0245}
+]

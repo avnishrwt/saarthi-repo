@@ -1,0 +1,11 @@
+{
+  "_note": "SIMULATED alert in an IMD-like shape for the demo. Not a real IMD message or format; check the real CAP/IMD feed format before claiming compatibility.",
+  "source": "IMD (simulated)",
+  "type": "heavy_rainfall",
+  "severity": "red",
+  "headline": "Extremely heavy rainfall warning (SIMULATED)",
+  "area": "Demo District (fictional)",
+  "hazard": "flood",
+  "issued_at": "2026-11-10T01:45:00+05:30",
+  "valid_until": "2026-11-10T14:00:00+05:30"
+}

@@ -1,0 +1,19 @@
+# secrets: API keys live ONLY in .env, never in git
+.env
+.env.*
+!.env.example
+
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.db
+*.db-wal
+*.db-shm
+uploads/
+
+frontend/node_modules/
+frontend/dist/
+
+# the locked evaluation split stays off GitHub until final evaluation
+data/labelled_messages_locked.csv

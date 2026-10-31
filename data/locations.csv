@@ -1,0 +1,19 @@
+place_id,name,aliases,lat,lng,in_area,flooded
+RAMPUR_G1,Rampur Gali 1,rampur gali 1;rampur gali no 1;gali 1 rampur;रामपुर गली 1,30.3112,78.0285,1,0
+RAMPUR_G3,Rampur Gali 3,rampur gali 3;rampur gali no 3;gali 3 rampur;gali no 3 rampur;रामपुर गली 3;गली 3 रामपुर,30.3100,78.0300,1,1
+RAMPUR_G5,Rampur Gali 5,rampur gali 5;rampur gali no 5;gali 5 rampur;रामपुर गली 5,30.3088,78.0318,1,1
+RAMPUR_SCHOOL,Rampur Primary School,rampur school;rampur primary school;rampur ka school;रामपुर स्कूल,30.3100,78.049343,1,1
+SECTOR4_MANDIR,Sector 4 Shiv Mandir,sector 4 mandir;sector 4 shiv mandir;sector 4 temple;sec 4 mandir;सेक्टर 4 मंदिर,30.2880,78.0150,1,1
+SECTOR4_MARKET,Sector 4 Market,sector 4 market;sector 4 bazaar;sec 4 market,30.2895,78.0170,1,1
+SECTOR2_CLINIC,Sector 2 Health Centre,sector 2 clinic;sector 2 hospital;sector 2 health centre;sector 2 dispensary,30.3220,78.0200,1,0
+GANDHI_NAGAR,Gandhi Nagar,gandhi nagar;gandhinagar;गांधी नगर,30.2980,78.0250,1,0
+NEHRU_COLONY,Nehru Colony,nehru colony;nehru colni;नेहरू कॉलोनी,30.3250,78.0400,1,1
+SHIVPURI_GHAT,Shivpuri Ghat,shivpuri ghat;shivpuri;शिवपुरी घाट,30.3010,78.0420,1,1
+MASJID_GALI,Masjid Wali Gali,masjid wali gali;masjid gali;मस्जिद वाली गली,30.3070,78.0270,1,1
+IRON_BRIDGE,Old Iron Bridge,iron bridge;old iron bridge;purana pul;lohe ka pul;पुराना पुल,30.3050,78.0360,1,1
+PANCHAYAT_BHAWAN,Panchayat Bhawan,panchayat bhawan;panchayat bhavan;panchayat ghar;पंचायत भवन,30.3180,78.0320,1,0
+MAIN_BAZAAR,Main Bazaar,main bazaar;main bazar;bada bazaar;मेन बाजार,30.3150,78.0250,1,0
+RAILWAY_COLONY,Railway Colony,railway colony;railway quarters;रेलवे कॉलोनी,30.3300,78.0280,1,0
+KALINAGAR_BRIDGE,Kalinagar Bridge,kalinagar bridge;kalinagar pul;kalinagar;कालीनगर पुल,30.4200,78.1100,0,0
+UPPER_HILL_TOWN,Upper Hill Town,upper hill town;hill town,30.4500,77.9000,0,0
+FAR_STATION_ROAD,Far Station Road,station road;far station road,30.2000,78.1500,0,0
