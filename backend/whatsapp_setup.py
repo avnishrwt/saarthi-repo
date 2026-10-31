@@ -1,8 +1,9 @@
 """
 One-time WhatsApp webhook setup through Meta's Graph API (instead of clicking in the dashboard).
 
-    .venv\\Scripts\\python -m backend.whatsapp_setup <APP_ID> <TUNNEL_URL>
-    e.g. .venv\\Scripts\\python -m backend.whatsapp_setup 1154233990293020 https://abc.trycloudflare.com
+    .venv\\Scripts\\python -m backend.whatsapp_setup <APP_ID> <TUNNEL_URL> [WABA_ID]
+    e.g. .venv\\Scripts\\python -m backend.whatsapp_setup 1154233990293020 https://abc.trycloudflare.com 1100607409470386
+    (WABA_ID = "Messaging account ID" on the Try it out page; optional)
 
 What it does (and nothing else):
   1. POST /{app-id}/subscriptions   -> sets callback URL + verify token, field "messages".
@@ -20,7 +21,7 @@ import httpx
 from backend import whatsapp as w
 
 
-def main(app_id: str, tunnel: str) -> int:
+def main(app_id: str, tunnel: str, waba_arg: str = "") -> int:
     if not (w.TOKEN and w.APP_SECRET and w.VERIFY_TOKEN):
         print("Missing WHATSAPP_TOKEN / WHATSAPP_APP_SECRET / WHATSAPP_VERIFY_TOKEN in .env")
         return 1
@@ -48,7 +49,15 @@ def main(app_id: str, tunnel: str) -> int:
                   params={"input_token": w.TOKEN, "access_token": app_token}).json().get("data", {})
     wabas = sorted({t for s in d.get("granular_scopes", []) if s.get("scope", "").startswith("whatsapp")
                     for t in s.get("target_ids", [])})
+    if waba_arg and waba_arg not in wabas:
+        wabas.append(waba_arg)
     print("2. token valid:", d.get("is_valid"), "| WhatsApp Business Account ids:", wabas or "none found")
+    if not d.get("is_valid"):
+        why = d.get("error", {}).get("message", "unknown reason")
+        print("   -> token problem:", why)
+        print("   -> Fix: Meta > Use cases > Connect on WhatsApp > Step 1. Try it out > Generate token,")
+        print("      paste it as WHATSAPP_TOKEN in .env, save, restart the backend, run this script again.")
+        return 1
 
     for waba in wabas:
         s = httpx.post(f"{g}/{waba}/subscribed_apps", timeout=30, headers={"Authorization": f"Bearer {w.TOKEN}"})
@@ -64,7 +73,7 @@ def main(app_id: str, tunnel: str) -> int:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
+    if len(sys.argv) not in (3, 4):
         print(__doc__)
         sys.exit(2)
-    sys.exit(main(sys.argv[1], sys.argv[2]))
+    sys.exit(main(*sys.argv[1:]))
