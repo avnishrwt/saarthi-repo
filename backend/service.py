@@ -435,7 +435,7 @@ class Rahat:
             "metrics": {
                 "last_solve_ms": self.store.kv_get("last_solve_ms"),
                 "avg_pipeline_s": round(sum(self.timings) / len(self.timings), 2) if self.timings else None,
-                "extractor": llm.name() if (self.use_llm if self.use_llm is not None else llm.enabled()) else "rules",
+                "extractor": llm.status() if (self.use_llm if self.use_llm is not None else llm.enabled()) else "rules",
             },
             "config": {"weights": config.PRIORITY_WEIGHTS, "bands": config.BANDS, "lambda": config.LAMBDA,
                        "cost_mode": config.COST_MODE, "conf_neutral": config.CONF_NEUTRAL,

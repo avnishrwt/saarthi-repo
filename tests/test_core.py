@@ -97,6 +97,7 @@ def test_flood_night_story(r):
     dadi = by_place["DEEP_NAGAR"]
     assert len(dadi) == 1 and len(dadi[0].message_ids) == 3
     assert dadi[0].band == Band.CRIT and dadi[0].confidence >= 0.8
+    assert dadi[0].callback.status == "not_needed"      # 3 independent relatives: no callback left pending
 
     # food at the school is a separate incident (not merged with dadi)
     assert len(by_place["DALANWALA"]) == 1

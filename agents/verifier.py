@@ -252,6 +252,11 @@ def apply_matrix(inc: Incident) -> None:
         inc.action = "normal_queue"
     lone = len(set(inc.sender_hashes)) <= 1 and inc.source == "messages"
     needs_callback = inc.action in ("verify_first", "standby_and_verify", "callback_review") or (lone and high_p)
+    # an AUTOMATIC callback (by=None) is no longer needed once independent people confirmed it
+    if (inc.callback.status == "pending" and inc.callback.by is None and not needs_callback
+            and not lone and not inc.red_flags):
+        inc.callback.status = "not_needed"
+        inc.notes.append(f"automatic callback cancelled: confirmed by {len(set(inc.sender_hashes))} senders")
     if needs_callback and inc.callback.status == "none":
         inc.callback.status = "pending"
         inc.notes.append("automatic callback started" + (" in parallel (lone report)" if lone and high_p else ""))
