@@ -85,3 +85,23 @@ def test_vague_then_location_pin_joins_same_incident(app):
     assert wait(main, lambda: main.rahat.store.all("incidents")[0].location.lat is not None)
     incs = main.rahat.store.all("incidents")
     assert len(incs) == 1 and len(incs[0].message_ids) == 2
+
+
+def test_real_whatsapp_shows_in_simulator_and_dashboard(app):
+    """A real WhatsApp message appears in the simulator's live list (masked number) and is badged on the dashboard."""
+    c, main, sent = app
+    post(c, payload("919800003210", "Majra me chhat pe 5 log phase hai, 2 bacche bhi"))
+    assert wait(main, lambda: main.rahat.store.all("incidents"))
+    chats = c.get("/sim/live_chats").json()
+    assert len(chats) == 1 and chats[0]["label"] == "WhatsApp ••••3210"          # masked, never the full number
+    assert "919800003210" not in json.dumps(chats)
+    inc_id = chats[0]["incident_id"]
+    assert inc_id in c.get("/state").json()["live_incidents"]
+    convo = c.get("/sim/conversation", params={"sender_hash": chats[0]["sender_hash"]}).json()
+    assert convo[0]["mine"] and "Majra" in convo[0]["text"]
+    assert wait(main, lambda: any(not m["mine"] for m in
+                                  c.get("/sim/conversation", params={"sender_hash": chats[0]["sender_hash"]}).json()))
+    # simulator messages are NOT listed as real WhatsApp
+    c.post("/messages", json={"sender_id": "S-sim", "channel": "whatsapp", "raw_text": "deep nagar me paani"})
+    time.sleep(0.5)
+    assert len(c.get("/sim/live_chats").json()) == 1

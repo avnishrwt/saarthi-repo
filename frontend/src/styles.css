@@ -258,7 +258,7 @@ button.light:hover { background: rgba(255,255,255,.22); border-color: #fff; }
 .chat-head { display: flex; gap: 8px; align-items: center; background: #075e54; color: #fff; padding: 8px 10px; border-radius: 10px 10px 0 0; }
 .chat-head .muted { color: #c8e6c9; }
 .chat-avatar { width: 32px; height: 32px; border-radius: 50%; background: #25d366; display: grid; place-items: center; font-weight: 800; }
-.chat { background: #ece5dd; height: 260px; overflow: auto; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.chat { background: #ece5dd; height: 340px; overflow: auto; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
 .chat-empty { margin: auto; color: #6d6d6d; font-size: 12px; text-align: center; }
 .bubble { max-width: 85%; padding: 6px 9px 4px; border-radius: 8px; font-size: 13px; box-shadow: 0 1px 1px rgba(0,0,0,.1); white-space: pre-wrap; }
 .bubble span { display: block; text-align: right; font-size: 10px; color: #777; margin-top: 2px; }
@@ -539,3 +539,30 @@ button.light:hover { background: #f6f8fa; border-color: #c8d1db; }
 .ts.down .ts-n { color: #b42318; }
 .ts.total { border-top: 1px solid #eaecf0; margin-top: 3px; padding-top: 5px; }
 .ts.total .ts-t { font-weight: 700; }
+
+/* ---------------- live WhatsApp */
+.qlive { display: inline-block; margin-right: 8px; background: #dcfae6; color: #067647; font-weight: 700; font-size: 10.5px; padding: 1px 8px; border-radius: 10px; }
+.livebox { background: #f6fef9; border: 1px solid #abefc6; border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; }
+.livebox h3 { margin: 0 0 6px; }
+.livechat { display: block; width: 100%; text-align: left; background: #fff; border: 1px solid #d0d5dd; border-radius: 10px; padding: 8px 10px; margin: 6px 0; cursor: pointer; }
+.livechat.on, .livechat:hover { border-color: #17b26a; box-shadow: 0 0 0 2px #dcfae6; }
+.livechat-case { color: #067647; margin-top: 2px; }
+.chat-head.is-live { background: #128c4a; }
+.chat-back { margin-left: auto; background: rgba(255,255,255,.18); color: #fff; border: 0; border-radius: 8px; font-size: 12px; padding: 4px 8px; }
+.composer.live-note { font-size: 12px; color: #475467; padding: 10px 12px; }
+
+/* ---------------- offline (airplane mode) */
+.offline.offline-box { display: flex; flex-direction: column; gap: 3px; background: #fff4e5; border-bottom: 2px solid #f79009; }
+.offline.offline-box span { font-weight: 400; font-size: 13px; color: #7a4100; }
+.offline.offline-box ul { margin: 4px 0 0; padding-left: 4px; list-style: none; font-weight: 600; }
+.offline.offline-box i { font-weight: 400; color: #93370d; font-size: 12px; }
+.saved-done { background: #ecfdf3; border: 1px solid #abefc6; color: #05603a; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+
+/* ---------------- radio fallback */
+.radio-box { margin-top: 10px; border: 1px dashed #b2ddff; background: #f5faff; border-radius: 10px; padding: 9px 10px; }
+.radio-head { font-weight: 700; font-size: 13px; color: #175cd3; margin-bottom: 6px; }
+.radio-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 5px; }
+.radio-btns button { border-radius: 8px; font-weight: 600; }
+.radio-btns .ok-btn { background: #ecfdf3; border-color: #abefc6; color: #067647; }
+.op-offline { background: #fff4e5; color: #7a4100; border-bottom: 2px solid #f79009; padding: 8px 18px; font-size: 13px; }
+.sim-tag { background: #7a4100; color: #fff; font-size: 10.5px; font-weight: 800; letter-spacing: .6px; padding: 1px 7px; border-radius: 6px; margin-right: 8px; }

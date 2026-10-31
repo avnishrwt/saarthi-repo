@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import { sendTeamStatus } from './opqueue.js'
 import { api, ACTION_LABEL, ASSIGN_TEXT, BAND_COLOR, BAND_NAME, CALLBACK_TEXT, NEED_TEXT, TEAM_ICON, VULN_TEXT, ago, errText, explainFlag, fmtTime, toast, trustSteps } from './api.js'
 
 const FACTOR_NAME = { medical: 'Medical danger', people: 'People at risk', vulnerable: 'Elderly / child / alone', hazard: 'Water / hazard level', waiting: 'Time waiting' }
 const STATUS_TEXT = { open: 'Open', assigned: 'Team assigned', resolved: 'Resolved', false: 'False report' }
+const RADIO = [['en_route', '🚤 On the way'], ['reached', '📍 Reached'], ['rescued', '✅ Rescued'], ['need_backup', '🆘 Need backup'], ['no_one_here', '✗ No one here']]
 const CHANNEL_ICON = { whatsapp: '🟢 WhatsApp', sms: '✉ SMS', voice: '🎙 Voice note', missed_call: '📞 Missed call', ivr: '☎ IVR', web: '🌐 Web', helpline: '🚨 112', volunteer: '🙋 Volunteer', proactive: '🔔 Auto-call' }
 
 // Incident details as a pop-up over the dashboard. Esc, × or a click outside closes it.
@@ -78,7 +80,11 @@ export default function IncidentPanel({ id, state, onClose, version }) {
       <h2>{i.title}</h2>
     </div>
 
-    <div className="inext">👉 <b>Next step:</b> {ACTION_LABEL[i.action] || i.action}</div>
+    <div className="inext">👉 <b>Next step:</b> {
+      active.some((a) => a.status !== 'done')
+        ? `${active.filter((a) => a.status !== 'done').map((a) => tname(a.team_id)).join(', ')} is on the job: follow its updates (or enter them below if the team calls by radio)`
+        : i.status === 'resolved' ? 'Done: case resolved' : i.status === 'false' ? 'Closed: marked as a false report'
+        : ACTION_LABEL[i.action] || i.action}</div>
     {err && <div className="err">{err}</div>}
 
     <div className="tiles">
@@ -123,6 +129,19 @@ export default function IncidentPanel({ id, state, onClose, version }) {
                 <div className={`pill pill-${a.status}`}>{ASSIGN_TEXT[a.status] || a.status}</div>
                 <div className="muted small">approved by {a.approved_by} · ETA {Math.round(a.eta_min)} min</div>
               </div>
+            </div>
+          ))}
+          {active.filter((a) => a.status !== 'done').map((a) => (
+            <div key={`radio-${a.id}`} className="radio-box">
+              <div className="radio-head">📻 Team called by radio / phone? Enter it for them</div>
+              <div className="radio-btns">
+                {RADIO.filter(([s]) => !(s === 'en_route' && a.status !== 'approved') && !(s === 'reached' && a.status === 'on_scene')).map(([s, label]) => (
+                  <button key={s} className={s === 'no_one_here' ? 'danger' : s === 'rescued' ? 'ok-btn' : ''}
+                    onClick={() => (s !== 'no_one_here' || confirm('Team found no one there? The report will be marked false.'))
+                      && sendTeamStatus(a.team_id, s, a.id, label)}>{label}</button>
+                ))}
+              </div>
+              <div className="muted small">Saved as "entered by operator via radio" in the log. If the team's own phone sends the same later, it is skipped.</div>
             </div>
           ))}
         </section>

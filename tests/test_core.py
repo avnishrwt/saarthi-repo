@@ -179,3 +179,54 @@ def test_reject_bans_pair(r):
     r.decide(a.id, ApproveIn(action="reject"))
     rec = [x for x in r.store.all("assignments") if x.status.value == "recommended"]
     assert rec and rec[0].team_id != a.team_id
+
+
+def test_citizen_hears_back_at_every_step(r):
+    """The person who asked must not go silent after one reply: ack, dispatch, on the way, reached, done."""
+    from backend.service import hash_sender
+    send(r, "S-dadi-1", "Bhai Deep Nagar gali 3 mein meri dadi phasi hai, paani 5 feet hai")
+    send(r, "S-dadi-2", "deep nagar gali 3 old lady trapped plz")          # second person, same case
+    a = [x for x in r.store.all("assignments") if x.status.value == "recommended"][0]
+    r.decide(a.id, ApproveIn())
+    for s in ("en_route", "reached", "rescued"):
+        r.team_status(a.team_id, TeamStatusIn(status=s))
+    first = [m["text"] for m in reversed(r.store.outbox(hash_sender("S-dadi-1")))]
+    assert first[0].startswith("RAHAT: Aapka message control room tak pahunch gaya")
+    assert any("bheji gayi hai" in t for t in first)
+    assert any("raaste mein" in t for t in first)
+    assert any("pahunch gayi hai" in t for t in first)
+    assert any("kaam poora" in t for t in first)
+    second = [m["text"] for m in r.store.outbox(hash_sender("S-dadi-2"))]
+    assert any("pehle se control room mein hai" in t for t in second)       # told it was merged, not ignored
+    assert any("raaste mein" in t for t in second)                         # and gets the same updates
+
+
+def test_noise_gets_a_helpful_reply(r):
+    from backend.service import hash_sender
+    send(r, "S-q", "kab tak barish rukegi?")
+    texts = [m["text"] for m in r.store.outbox(hash_sender("S-q"))]
+    assert any("madad ki request nahi mili" in t for t in texts)
+
+
+def test_operator_radio_update_and_late_phone_tap_is_ignored(r):
+    """Radio fallback: the operator enters 'rescued' for the team. The team's own phone was offline and syncs
+    its old taps later: they must not touch the team's NEXT job."""
+    send(r, "S-dadi-1", "Bhai Deep Nagar gali 3 mein meri dadi phasi hai, paani 5 feet hai")
+    a1 = [x for x in r.store.all("assignments") if x.status.value == "recommended"][0]
+    r.decide(a1.id, ApproveIn())
+    r.team_status(a1.team_id, TeamStatusIn(status="rescued", assignment_id=a1.id, by="operator-1", via="radio"))
+    inc1 = r.store.get("incidents", a1.incident_id)
+    assert inc1.status.value == "resolved"
+    assert any("operator-1 entered 'rescued'" in n and "radio" in n for n in inc1.notes)
+
+    # the freed boat gets a new job
+    send(r, "S-nehru", "Nehru colony me 3 log phase hai paani 5 feet hai")
+    a2 = [x for x in r.store.all("assignments") if x.status.value == "recommended" and x.team_id == a1.team_id]
+    assert a2, "freed team should be suggested for the next case"
+    r.decide(a2[0].id, ApproveIn())
+
+    # the phone comes back online and sends its stale 'reached' for the OLD job
+    res = r.team_status(a1.team_id, TeamStatusIn(status="reached", assignment_id=a1.id, via="phone"))
+    assert res.get("ignored") == "stale assignment"
+    assert r.store.get("assignments", a2[0].id).status.value == "approved"     # new job untouched
+    assert "stale_status_ignored" in [x.action for x in r.store.audit_list(50)]

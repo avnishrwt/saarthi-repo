@@ -20,6 +20,9 @@ const STATUS = {
 // The one next step for each assignment status; everything else is secondary.
 const NEXT = { approved: 'en_route', en_route: 'reached', on_scene: 'rescued' }
 const STEPS = [['approved', 'Assigned'], ['en_route', 'On the way'], ['on_scene', 'Reached'], ['done', 'Done']]
+// a tap that is still waiting on the phone already moves the screen forward (optimistic)
+const TAP_TO_STEP = { en_route: 'en_route', reached: 'on_scene', rescued: 'done', no_one_here: 'done' }
+const hhmm = (t) => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
 export default function TeamApp() {
   const [teams, setTeams] = useState([])
@@ -49,24 +52,40 @@ export default function TeamApp() {
         lastAsg.current = id
         setData(d); save(CKEY + teamId, d); setOnline(true)
       })
-      .catch(() => { setOnline(false); setData(load(CKEY + teamId, null)) })
+      .catch(() => { setOnline(false); wasOffline.current = true; setData(load(CKEY + teamId, null)) })
   }, [teamId])
   useLive(refresh)
   useEffect(() => { lastAsg.current = null; refresh() }, [teamId, refresh])
 
+  const wasOffline = useRef(false)
+  const flushing = useRef(false)
   const flush = useCallback(async () => {
+    if (flushing.current) return false            // the 10 s timer and the "online" event can fire together
+    flushing.current = true
     let q = load(QKEY, [])
-    while (q.length) {
-      const u = q[0]
-      try { await api(`/teams/${u.team_id}/status`, { method: 'PATCH', body: { status: u.status, client_ts: u.client_ts } }) }
-      catch { setOnline(false); return false }
-      q = q.slice(1); save(QKEY, q); setQueue(q)
+    let sent = 0
+    try {
+      while (q.length) {
+        const u = q[0]
+        try {
+          const r = await api(`/teams/${u.team_id}/status`, { method: 'PATCH',
+            body: { status: u.status, client_ts: u.client_ts, assignment_id: u.assignment_id, via: 'phone' } })
+          if (r?.ignored) toast(`"${STATUS[u.status]?.en || u.status}" was already updated by the control room (radio), skipped`, 'info')
+        } catch { setOnline(false); wasOffline.current = true; return false }
+        q = q.slice(1); save(QKEY, q); setQueue(q); sent += 1
+      }
+    } finally { flushing.current = false }
+    if (wasOffline.current && sent > 0) {
+      toast(`✓ Back online: ${sent} saved update${sent > 1 ? 's' : ''} sent to the control room`, 'ok')
+      navigator.vibrate?.(150)
     }
+    wasOffline.current = false
+    setOnline(true)
     refresh()
     return true
   }, [refresh])
   useEffect(() => {
-    const on = () => { setOnline(true); flush() }, off = () => setOnline(false)
+    const on = () => { setOnline(true); flush() }, off = () => { setOnline(false); wasOffline.current = true }
     window.addEventListener('online', on); window.addEventListener('offline', off)
     const t = setInterval(flush, 10000)
     return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); clearInterval(t) }
@@ -94,7 +113,7 @@ export default function TeamApp() {
 
   const tap = async (status) => {
     if (status === 'no_one_here' && !confirm('Nobody at this location? The report will be marked false.')) return
-    const q = [...load(QKEY, []), { team_id: teamId, status, client_ts: new Date().toISOString() }]
+    const q = [...load(QKEY, []), { team_id: teamId, status, client_ts: new Date().toISOString(), assignment_id: data?.assignment?.id }]
     save(QKEY, q); setQueue(q)
     const ok = await flush()
     toast(ok ? `✓ Sent: ${STATUS[status].en}` : `Saved on phone: "${STATUS[status].en}" will send when the network is back`, ok ? 'ok' : 'info')
@@ -102,8 +121,11 @@ export default function TeamApp() {
   const pickTeam = (id) => { setTeamId(id); save(TKEY, id); setData(null) }
 
   const a = data?.assignment, inc = data?.incident, cl = data?.checklist, me = teams.find((t) => t.id === teamId)
-  const next = a && NEXT[a.status]
-  const stepIdx = a ? STEPS.findIndex(([k]) => k === a.status) : -1
+  const pending = queue.filter((u) => u.team_id === teamId)
+  const lastStep = [...pending].reverse().map((u) => TAP_TO_STEP[u.status]).find(Boolean)
+  const shown = lastStep || a?.status                     // what the team sees, including taps not sent yet
+  const next = a && NEXT[shown]
+  const stepIdx = a ? STEPS.findIndex(([k]) => k === shown) : -1
 
   return (
     <div className="phone-app">
@@ -112,8 +134,14 @@ export default function TeamApp() {
         {me && <span className="tme">{TEAM_ICON[me.type]} {me.name}</span>}
         {teamId && <button className="light small-btn" onClick={() => pickTeam('')}>Change team</button>}
       </header>
-      {!online && <div className="offline">📴 Offline: showing the last saved job. {queue.length} update(s) will send automatically.</div>}
-      {online && queue.length > 0 && <div className="offline">Sending {queue.length} update(s)…</div>}
+      {!online && (
+        <div className="offline offline-box">
+          <b>📴 No network: the app still works.</b>
+          <span>Showing the last saved job. Taps are saved on this phone and sent by themselves when the network is back.</span>
+          {pending.length > 0 && <ul>{pending.map((u, k) => <li key={k}>⏳ {STATUS[u.status]?.en || u.status} <i>saved at {hhmm(u.client_ts)}</i></li>)}</ul>}
+        </div>
+      )}
+      {online && pending.length > 0 && <div className="offline">Sending {pending.length} saved update(s)…</div>}
       <nav className="tabs">
         <button className={tab === 'assignment' ? 'on' : ''} onClick={() => setTab('assignment')}>My job</button>
         <button className={tab === 'volunteer' ? 'on' : ''} onClick={() => setTab('volunteer')}>Report for someone</button>
@@ -143,6 +171,9 @@ export default function TeamApp() {
         </div>
       ) : (
         <div className="pad">
+          {shown === 'done' && pending.length > 0 && (
+            <div className="saved-done">✅ Saved on phone: <b>{STATUS[pending[pending.length - 1].status]?.en}</b>. It reaches the control room as soon as there is network.</div>
+          )}
           <ol className="steps">
             {STEPS.map(([k, label], n) => <li key={k} className={n < stepIdx ? 'done' : n === stepIdx ? 'now' : ''}>{label}</li>)}
           </ol>

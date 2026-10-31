@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, useLive, toast, errText, caseKind, explainFlag, KIND, BAND_COLOR, BAND_NAME, ASSIGN_TEXT, TEAM_ICON, VULN_TEXT, ago, fmtTime } from './api.js'
 import Toasts from './Toasts.jsx'
+import { flushOpQueue, opQueue, setSimOffline, simOffline } from './opqueue.js'
 import MapView from './MapView.jsx'
 import IncidentPanel from './IncidentPanel.jsx'
 
@@ -32,7 +33,24 @@ export default function Dashboard() {
   const [tab, setTab] = useState(() => new URLSearchParams(location.hash.split('?')[1] || '').get('tab') || 'cases')   // cases | activity | teams
   const [q, setQ] = useState('')              // search in cases
   const [help, setHelp] = useState(() => new URLSearchParams(location.hash.split('?')[1] || '').has('help'))   // "How it works" pop-up; #/?help opens it
-  const [connected, setConnected] = useState(true)
+  const [wsUp, setWsUp] = useState(true)
+  const [netOk, setNetOk] = useState(navigator.onLine)     // browser network + last request to the server
+  const connected = wsUp && netOk
+  useEffect(() => {
+    const on = () => setNetOk(true), off = () => setNetOk(false)
+    window.addEventListener('online', on); window.addEventListener('offline', off)
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off) }
+  }, [])
+  const [opPending, setOpPending] = useState(() => opQueue().length)   // radio updates waiting for the server
+  const [sim, setSim] = useState(simOffline)                          // demo: "control room offline" switch
+  useEffect(() => {
+    const upd = () => { setOpPending(opQueue().length); setSim(simOffline()) }
+    window.addEventListener('rahat-opqueue', upd)
+    const t = setInterval(flushOpQueue, 10000)
+    flushOpQueue()
+    return () => { window.removeEventListener('rahat-opqueue', upd); clearInterval(t) }
+  }, [])
+  useEffect(() => { if (connected) flushOpQueue() }, [connected])
   const seen = useRef(null)        // incident id -> message count already announced
   const fresh = useRef(new Set())  // incidents that arrived while the page was open (highlighted once)
 
@@ -45,7 +63,8 @@ export default function Dashboard() {
       const was = prev.get(i.id)
       if (was == null) {
         fresh.current.add(i.id)
-        toast(`New ${BAND_NAME[i.band].toLowerCase()} case: ${i.title}`, i.band === 'CRIT' ? 'crit' : 'info', () => setSel(i.id))
+        const real = (st.live_incidents || []).includes(i.id) ? '🟢 Real WhatsApp · ' : ''
+        toast(`${real}New ${BAND_NAME[i.band].toLowerCase()} case: ${i.title}`, i.band === 'CRIT' || real ? 'crit' : 'info', () => setSel(i.id))
       } else if (i.message_ids.length > was) {
         toast(`Another message about "${i.title}" (now ${i.message_ids.length}, merged, not duplicated)`, 'info', () => setSel(i.id))
       }
@@ -53,9 +72,10 @@ export default function Dashboard() {
   }, [])
 
   const refresh = useCallback(() => {
-    api('/state').then((s) => { announce(s); setState(s); setVersion((v) => v + 1); setErr('') }).catch((e) => setErr(errText(e)))
+    api('/state').then((s) => { announce(s); setState(s); setVersion((v) => v + 1); setErr(''); setNetOk(true) })
+      .catch((e) => { setErr(errText(e)); if (/reach the RAHAT server/.test(errText(e))) setNetOk(false) })
   }, [announce])
-  useLive(refresh, setConnected)
+  useLive(refresh, setWsUp)
   const onSelect = useCallback((id) => setSel(id), [])
   useEffect(() => {
     const esc = (e) => { if (e.key === 'Escape') { setSel(null); setCmp(null); setDemoOpen(false); setHelp(false) } }
@@ -140,6 +160,7 @@ export default function Dashboard() {
             <button onClick={() => demo(startNight50)}><b>▶ Dehradun night: 50 messages</b> <span className="muted small">(alert + synthetic set)</span></button>
             <button onClick={() => demo(() => run(api('/sim/alert', { body: {} }), 'Flood alert received (simulated IMD)'))}>Only the flood alert</button>
             <button onClick={() => demo(() => run(api('/sim/replay', { body: { speed: 4 } }), 'Replaying 18 demo messages…'))}>Only the message burst</button>
+            <button onClick={() => demo(() => setSimOffline(!sim))}>{sim ? '📶 End simulation: control room back online' : '📴 Simulate: control room offline'}</button>
             <a href="#/citizen" target="_blank" rel="noreferrer">Citizen phone simulator ↗</a>
             <a href="#/team" target="_blank" rel="noreferrer">Rescue team app ↗</a>
             <hr />
@@ -148,6 +169,14 @@ export default function Dashboard() {
         </div>
       </header>
       {err && <div className="err">{err}</div>}
+      {(!connected || sim || opPending > 0) && (
+        <div className="op-offline">
+          {sim && <span className="sim-tag">SIMULATION</span>}
+          {!connected || sim ? '📴 No connection to the RAHAT server. You can still enter radio updates; ' : '⏳ '}
+          {opPending > 0 ? <b>{opPending} radio update{opPending > 1 ? 's' : ''} saved here, sending automatically when the connection is back.</b>
+            : 'they will be saved in this browser and sent automatically.'}
+        </div>
+      )}
 
       <div className="kpis">
         <Kpi color="slate" icon="✉" n={state.counts.messages} label="messages received" sub={`merged into ${state.incidents.length} cases`} onClick={() => setTab('activity')} />
@@ -197,7 +226,7 @@ export default function Dashboard() {
               <h4><span className="gicon">{g.icon}</span>{g.title} <span className="count">{groups[g.key].length}</span></h4>
               <div className="hint">{g.hint}</div>
               {groups[g.key].map(({ i, act, rec }) => (
-                <Card key={i.id} i={i} act={act} rec={rec} teams={teams} area={state.area} place={placeName[i.location.place_id] || i.location.text}
+                <Card key={i.id} i={i} act={act} rec={rec} teams={teams} area={state.area} live={(state.live_incidents || []).includes(i.id)} place={placeName[i.location.place_id] || i.location.text}
                   selected={sel === i.id} fresh={fresh.current.has(i.id)} onClick={() => setSel(i.id)} onApprove={approve} busy={busy} />
               ))}
             </section>
@@ -281,7 +310,7 @@ function HowItWorks({ onClose }) {
   )
 }
 
-function Card({ i, act, rec, teams, place, area, selected, fresh, onClick, onApprove, busy }) {
+function Card({ i, act, rec, teams, place, area, live, selected, fresh, onClick, onApprove, busy }) {
   const senders = new Set(i.sender_hashes).size
   // titles look like "6 people trapped - MAJRA": the place is shown separately, so drop the repeat
   const cut = place ? i.title.toLowerCase().lastIndexOf(` - ${place.toLowerCase()}`) : -1
@@ -298,7 +327,7 @@ function Card({ i, act, rec, teams, place, area, selected, fresh, onClick, onApp
     <div className={`qcard band-${i.band} ${selected ? 'sel' : ''} ${fresh ? 'fresh' : ''}`} onClick={onClick}>
       <div className="qcard-top">
         <span className="qband"><i />{BAND_NAME[i.band]}</span>
-        <span className="qtime">{ago(i.created_at)}</span>
+        <span className="qtime">{live && <span className="qlive" title="At least one message came from a real phone via WhatsApp">🟢 Live WhatsApp</span>}{ago(i.created_at)}</span>
       </div>
       <div className="qcard-title"><span className="qkind" title={caseKind(i)[2]}>{caseKind(i)[1]}</span>{title}</div>
       <div className="qfacts">
@@ -424,10 +453,18 @@ function describe(x, ctx) {
   if (x.action === 'approved') return { icon: '✓', text: `${x.actor} approved: ${team(a.team_id)} → ${incTitle(a.incident_id)}`, inc: a.incident_id, kind: 'ok' }
   if (x.action === 'override') return { icon: '↔', text: `${x.actor} sent ${team(a.team_id)} instead → ${incTitle(a.incident_id)}`, inc: a.incident_id, kind: 'ok' }
   if (x.action === 'rejected') return { icon: '✗', text: `${x.actor} rejected ${team(a.team_id)} for ${incTitle(a.incident_id)}`, inc: a.incident_id }
-  if (st && st !== 'location') return { icon: st === 'rescued' ? '✅' : st === 'no_one_here' ? '✗' : st === 'need_backup' ? '🆘' : '🚤', text: `${team(x.actor)} ${STATUS_WORD[st] || st}${asg ? `: ${incTitle(asg.incident_id)}` : ''}`, inc: asg?.incident_id, kind: st === 'rescued' ? 'ok' : st === 'need_backup' ? 'bad' : '' }
+  if (st && st !== 'location') {
+    // the field app stamps the time of the tap; a big gap means it was tapped offline and synced later
+    const lag = a.client_ts ? (new Date(x.at) - new Date(a.client_ts)) / 1000 : 0
+    const later = lag < 90 ? `${Math.round(lag)} s later` : `${Math.round(lag / 60)} min later`
+    const offline = a.by ? ` · 📻 entered by ${a.by}${a.via ? ` via ${a.via}` : ''}`
+      : lag > 20 ? ` · 📴 tapped offline at ${hhmm(a.client_ts)}, reached control room ${later}` : ''
+    return { icon: st === 'rescued' ? '✅' : st === 'no_one_here' ? '✗' : st === 'need_backup' ? '🆘' : '🚤', text: `${team(x.actor)} ${STATUS_WORD[st] || st}${asg ? `: ${incTitle(asg.incident_id)}` : ''}${offline}`, inc: asg?.incident_id, kind: st === 'rescued' ? 'ok' : st === 'need_backup' ? 'bad' : '' }
+  }
   if (x.action.startsWith('verify_')) return { icon: '☎', text: `${incTitle(x.entity)}: ${x.action.slice(7).replace('_', ' ')}`, inc: x.entity }
   if (x.action === 'alert_received') return { icon: '⚠', text: `Flood alert received: ${x.actor}`, kind: 'bad' }
   if (x.action.startsWith('surge_')) return { icon: '⚡', text: `Surge mode → ${a.mode}${a.why ? ` (${a.why})` : ''}`, kind: a.mode === 'on' ? 'bad' : '' }
+  if (x.action === 'stale_status_ignored') return { icon: '↩', text: `Late update "${a.status}" from ${team(x.actor)} skipped: that job was already updated (e.g. by radio)` }
   if (x.action === 'proactive_checks_started') return { icon: '📞', text: `Auto-calls started to ${a.count} registered elderly residents` }
   if (x.action.startsWith('proactive_')) return { icon: '📞', text: `Auto-call ${x.entity}: ${x.action.slice(10).replace('_', ' ')}` }
   return null   // seeded, withdrawn suggestions, GPS pings: noise for this view
