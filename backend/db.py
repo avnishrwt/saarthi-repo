@@ -130,11 +130,18 @@ class Store:
             self.conn.commit()
 
     # ------------------------------------------------------------------ outbox (follow-up SMS, IVR prompts)
+    on_send = None     # optional hook(sender_hash, text): e.g. relay to WhatsApp
+
     def send(self, sender_hash: str, channel: str, text: str, incident_id: Optional[str] = None) -> None:
         with self.lock:
             self.conn.execute("INSERT INTO outbox (sender_hash, channel, text, incident_id, at) VALUES (?, ?, ?, ?, ?)",
                               (sender_hash, channel, text, incident_id, now_utc().isoformat()))
             self.conn.commit()
+        if self.on_send:
+            try:
+                self.on_send(sender_hash, text)
+            except Exception:
+                pass       # a failed WhatsApp reply must never break incident processing
 
     def outbox(self, sender_hash: Optional[str] = None, limit: int = 50) -> list[dict]:
         q = "SELECT sender_hash, channel, text, incident_id, at FROM outbox"

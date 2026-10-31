@@ -40,6 +40,25 @@ Kamla ji near Rispana Bridge, and the fake from Har Ki Pauri (Haridwar, outside 
 6. Citizen sim: Kamla ji **no_answer** creates a CRIT incident with no message from her.
 7. Team PWA (Boat Team A): **Rescued**. The optimizer re-solves and the next assignment appears.
 
+## Live WhatsApp demo (real phones → RAHAT)
+Friends or judges send WhatsApp messages to a Meta **test number**. Each one becomes an incident, and RAHAT replies with
+an acknowledgement, follow-up questions and "team dispatched" updates. A location pin from the same sender attaches to their incident.
+
+1. developers.facebook.com → My Apps → Create app → type **Business** → add the **WhatsApp** product.
+2. WhatsApp → **API Setup**: copy the temporary **access token** and the **Phone number ID** into `.env`
+   (`WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`). Under "To", add and verify every phone that will send (max 5 on a test number).
+   The temporary token expires in about 24 h; create a System User token for event day.
+3. App settings → Basic: copy the **App secret** into `WHATSAPP_APP_SECRET`. Pick any `WHATSAPP_VERIFY_TOKEN`.
+4. Public HTTPS URL for the laptop: `winget install --id Cloudflare.cloudflared` then
+   `cloudflared tunnel --url http://localhost:8000` (prints `https://xxxx.trycloudflare.com`; it changes on every restart), or ngrok with a free static domain.
+5. WhatsApp → **Configuration** → Webhook: callback URL `https://<tunnel>/webhooks/whatsapp`, the same verify token →
+   Verify and save → under Webhook fields, **subscribe to `messages`**.
+6. Restart the backend and check `http://localhost:8000/webhooks/whatsapp/status` → `"configured": true`.
+
+You **cannot** use your personal number: a number registered on the Cloud API stops working in the normal WhatsApp app.
+Venue Wi-Fi can fail, so keep the citizen simulator and a recorded video as backup. The raw WhatsApp number is held in
+memory only, to send replies; the database stores only the hashed id.
+
 ## Who owns what (one folder each; AI writes it, YOU must explain it)
 | Folder | Owner | What |
 |---|---|---|

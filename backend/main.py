@@ -24,6 +24,10 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from fastapi import Request
+from fastapi.responses import PlainTextResponse
+
+from backend import whatsapp
 from backend.service import Rahat
 from shared import config
 from shared.schemas import (ApproveIn, Channel, IncidentStatus, MessageIn, SurgeIn, TeamStatusIn, VerifyIn)
@@ -33,6 +37,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname
 log = logging.getLogger("rahat.api")
 
 rahat = Rahat()
+rahat.store.on_send = whatsapp.relay
 clients: set[WebSocket] = set()
 UPLOADS = config.ROOT / "uploads"
 UPLOADS.mkdir(exist_ok=True)
@@ -106,6 +111,43 @@ async def post_voice(file: UploadFile = File(...), sender_id: str = Form(...), c
     path.write_bytes(await file.read())
     m = rahat.ingest(MessageIn(channel=Channel(channel), sender_id=sender_id, audio_url=str(path)))
     return {"id": m.id, "audio_url": str(path)}
+
+
+# ============================================================ WhatsApp Cloud API (real messages)
+@app.get("/webhooks/whatsapp")
+def wa_verify(request: Request):
+    """Meta's one-time check when you save the webhook URL in the developer dashboard."""
+    q = request.query_params
+    if q.get("hub.mode") == "subscribe" and whatsapp.VERIFY_TOKEN and q.get("hub.verify_token") == whatsapp.VERIFY_TOKEN:
+        return PlainTextResponse(q.get("hub.challenge", ""))
+    raise HTTPException(403, "verify token mismatch")
+
+
+@app.post("/webhooks/whatsapp")
+async def wa_inbound(request: Request):
+    raw = await request.body()
+    if not whatsapp.verify_signature(raw, request.headers.get("x-hub-signature-256")):
+        raise HTTPException(401, "bad signature")
+    items = whatsapp.parse(json.loads(raw or b"{}"))
+    for it in items:
+        if not it["wa_id"]:
+            continue
+        audio = await asyncio.to_thread(whatsapp.download_media, it["media_id"]) if it["media_id"] else None
+        body = MessageIn(channel=Channel.voice if it["media_id"] else Channel.whatsapp, sender_id=it["wa_id"],
+                         raw_text=it["text"], audio_url=audio, lat=it["lat"], lng=it["lng"],
+                         meta={"source_system": "whatsapp_cloud_api", "wa_message_id": it["id"],
+                               "location_only": it["type"] == "location", "ack_template": whatsapp.ACK})
+        from backend.service import hash_sender
+        whatsapp.remember(hash_sender(it["wa_id"]), it["wa_id"])
+        await asyncio.to_thread(rahat.ingest, body)      # ack is sent first thing in processing
+    return {"received": len(items)}      # Meta only needs a fast 200
+
+
+@app.get("/webhooks/whatsapp/status")
+def wa_status():
+    return {"configured": whatsapp.configured(), "verify_token_set": bool(whatsapp.VERIFY_TOKEN),
+            "signature_check": bool(whatsapp.APP_SECRET), "api_version": whatsapp.API_VERSION,
+            "senders_in_memory": len(whatsapp._reply_to)}
 
 
 # ============================================================ incidents

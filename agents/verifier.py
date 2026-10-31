@@ -77,11 +77,12 @@ def find_incident(store, msg: Message, ex: Extraction, loc: Location) -> tuple[O
     live = [i for i in store.all("incidents")
             if i.status in (IncidentStatus.open, IncidentStatus.assigned)
             and abs(msg.received_at - i.updated_at) <= window]
-    # 1. reply to our follow-up question joins the same incident
-    for inc in live:
-        if (inc.followup_sent and msg.sender_hash in inc.sender_hashes
+    # 1. reply to our follow-up question (or a bare location pin) joins the sender's own incident
+    for inc in sorted(live, key=lambda i: i.updated_at, reverse=True):
+        if (msg.sender_hash in inc.sender_hashes
+                and (inc.followup_sent or msg.meta.get("location_only"))
                 and msg.received_at - inc.updated_at <= timedelta(minutes=config.FOLLOWUP_WINDOW_MIN)):
-            return inc, "reply to follow-up question"
+            return inc, "reply to follow-up question" if inc.followup_sent else "location pin from the same sender"
     # 2. nearest incident by meaning + place + time
     best, best_d = None, 9.0
     for inc in live:

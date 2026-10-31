@@ -42,9 +42,9 @@ def _aware(dt: Optional[datetime]) -> datetime:
 
 
 class Rahat:
-    def __init__(self, db_path: str = config.DB_PATH, use_llm: Optional[bool] = None, workers: int = 6,
+    def __init__(self, db_path: Optional[str] = None, use_llm: Optional[bool] = None, workers: int = 6,
                  clock: Callable[[], datetime] = now_utc):
-        self.store = Store(db_path)
+        self.store = Store(db_path or config.DB_PATH)     # resolved at call time, not import time
         self.use_llm = use_llm
         self.clock = clock
         self.graph = pipeline.build(self.store, clock)
@@ -97,6 +97,8 @@ class Rahat:
     def _process(self, msg_id: str) -> None:
         t0 = now_utc()
         msg = self.store.get("messages", msg_id)
+        if msg.meta.get("ack_template"):                  # WhatsApp: acknowledge before any follow-up question
+            self.store.send(msg.sender_hash, msg.channel.value, msg.meta["ack_template"].format(ref=msg.id))
         try:
             state = self.graph.invoke({"msg": msg, "trace": [], "use_llm": self.use_llm,
                                        "now": self.clock(), "surge_hazard": surge.get(self.store)["hazard"]})
@@ -209,6 +211,11 @@ class Rahat:
                 self.store.put("incidents", inc)
                 self.store.put("assignments", a)
                 self.store.audit(body.operator, "approved", a.id, before, a.model_dump(mode="json"))
+                if inc.source == "messages":           # close the loop with the people who asked
+                    for sh in inc.sender_hashes:
+                        self.store.send(sh, "update", (f"RAHAT: {team.name} aapki taraf bheji gayi hai. "
+                                                       f"Andaazan {round(a.eta_min)} min. Ho sake toh oonchi jagah pe rahein."),
+                                        inc.id)
         self.resolve("optimizer")
         self.emit("assignment", id=a.id)
         return a
