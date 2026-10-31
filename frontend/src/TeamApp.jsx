@@ -50,6 +50,8 @@ export default function TeamApp() {
           navigator.vibrate?.([200, 100, 200])
         }
         lastAsg.current = id
+        // saved taps waiting? then flush() announces how many were sent; otherwise just say we're back
+        if (wasOffline.current && load(QKEY, []).length === 0) { wasOffline.current = false; toast('📶 Back online', 'ok') }
         setData(d); save(CKEY + teamId, d); setOnline(true)
       })
       .catch(() => { setOnline(false); wasOffline.current = true; setData(load(CKEY + teamId, null)) })
@@ -61,6 +63,7 @@ export default function TeamApp() {
   const flushing = useRef(false)
   const flush = useCallback(async () => {
     if (flushing.current) return false            // the 10 s timer and the "online" event can fire together
+    if (!navigator.onLine) { setOnline(false); wasOffline.current = true; return false }   // phone says no network
     flushing.current = true
     let q = load(QKEY, [])
     let sent = 0
@@ -79,9 +82,8 @@ export default function TeamApp() {
       toast(`✓ Back online: ${sent} saved update${sent > 1 ? 's' : ''} sent to the control room`, 'ok')
       navigator.vibrate?.(150)
     }
-    wasOffline.current = false
-    setOnline(true)
-    refresh()
+    if (sent > 0) { wasOffline.current = false; setOnline(true) }   // only a request that went through proves we are online
+    refresh()                                                        // refresh() decides online/offline when nothing was queued
     return true
   }, [refresh])
   useEffect(() => {

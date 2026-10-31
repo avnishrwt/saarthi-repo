@@ -566,3 +566,6 @@ button.light:hover { background: #f6f8fa; border-color: #c8d1db; }
 .radio-btns .ok-btn { background: #ecfdf3; border-color: #abefc6; color: #067647; }
 .op-offline { background: #fff4e5; color: #7a4100; border-bottom: 2px solid #f79009; padding: 8px 18px; font-size: 13px; }
 .sim-tag { background: #7a4100; color: #fff; font-size: 10.5px; font-weight: 800; letter-spacing: .6px; padding: 1px 7px; border-radius: 6px; margin-right: 8px; }
+/* offline banners stay on screen (and at the top while scrolling) until the connection is back */
+.phone-app .offline { position: sticky; top: 0; z-index: 50; }
+.op-offline { position: sticky; top: 0; z-index: 50; }
