@@ -179,3 +179,65 @@ def test_reject_bans_pair(r):
     r.decide(a.id, ApproveIn(action="reject"))
     rec = [x for x in r.store.all("assignments") if x.status.value == "recommended"]
     assert rec and rec[0].team_id != a.team_id
+
+
+# ----------------------------------------------------------------- citizen chat (multi-turn)
+def replies(r, m):
+    return [o["text"] for o in reversed(r.store.outbox(m.sender_hash))]
+
+
+def test_chat_same_sender_stays_one_incident_and_every_message_is_answered(r):
+    first = send(r, "S-chat", "Bhai Deep Nagar gali 3 mein meri dadi phasi hai, paani 5 feet hai")
+    send(r, "S-chat", "dadi 80 saal ki hai, chal nahi sakti")
+    send(r, "S-chat", "kab tak aayenge?")
+    assert len(r.store.all("incidents")) == 1                       # more detail, not a new case
+    out = replies(r, first)
+    assert len(out) == 3 and "bana diya" in out[0] and "jod di" in out[1]
+    assert not any("kahan" in t.lower() for t in out)               # never asks where after being told
+
+
+def test_chat_asks_each_missing_field_once(r):
+    m = send(r, "S-vague-chat", "khana chahiye 4-5 log hai")
+    send(r, "S-vague-chat", "pata nahi bhai")
+    send(r, "S-vague-chat", "Dalanwala school ke paas")
+    out = replies(r, m)
+    assert sum("kahan" in t.lower() for t in out) == 1
+    assert len(out) == 3 and "jod di" in out[-1]
+    assert len(r.store.all("incidents")) == 1
+
+
+def test_same_sender_new_place_is_a_new_incident(r):
+    send(r, "S-volunteer", "Bhai Deep Nagar gali 3 mein meri dadi phasi hai, paani 5 feet hai")
+    send(r, "S-volunteer", "MAJRA mein chhat pe 6 log phase hai bacche bhi hai")
+    assert len(r.store.all("incidents")) == 2                       # a volunteer reporting for others
+
+
+def test_chat_gets_team_updates(r):
+    m = send(r, "S-dadi-1", "Bhai Deep Nagar gali 3 mein meri dadi phasi hai, paani 5 feet hai")
+    a = [x for x in r.store.all("assignments") if x.status.value == "recommended"][0]
+    r.decide(a.id, ApproveIn())
+    send(r, "S-dadi-1", "kab tak aayenge?")
+    r.team_status(a.team_id, TeamStatusIn(status="reached"))
+    r.team_status(a.team_id, TeamStatusIn(status="rescued"))
+    out = replies(r, m)
+    assert "bheji gayi" in out[1] and "aa rahi hai" in out[2]
+    assert "pahunch gayi" in out[3] and "poora kar diya" in out[4]
+
+
+# ----------------------------------------------------------------- rules fallback must not drop real pleas
+@pytest.mark.parametrize("text", ["bachaoooo", "mujhe madad chahiye", "me car ke neeche dab rkha hua 2-4 log chahiye",
+                                  "kya koi madad karega?"])
+def test_rules_pleas_are_help_requests(text):
+    assert rules.extract(text).is_help_request
+
+
+def test_rules_question_and_food_box_stay_as_they_were():
+    assert not rules.extract("bijli kab tak aayegi koi batao").is_help_request
+    assert Need.rescue not in rules.extract("khane ka dabba chahiye 5 log").needs
+
+
+def test_unreadable_message_goes_to_human_review_not_noise(r):
+    m = send(r, "S-odd", "hello ji suno")
+    assert m.status.value == "review" and not r.store.all("incidents")
+    assert "khud dekhega" in replies(r, m)[0]
+    assert send(r, "S-q", "kab tak barish rukegi?").status.value == "info"     # a clear question is still info

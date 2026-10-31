@@ -10,7 +10,9 @@ on the same distance for comparison.
 
 distance = 0.6*(1 - text_similarity) + 0.25*geo + 0.15*time + need_mismatch
 Hard rules: both must have a location within MERGE_MAX_KM (a message with no
-location only joins its own sender's incident, i.e. a follow-up reply).
+location only joins its own sender's incident, i.e. a follow-up reply). A sender's
+next message joins their own live incident unless it names a different place
+(a volunteer reporting a second emergency).
 """
 from __future__ import annotations
 
@@ -72,17 +74,26 @@ def _distance(msg: Message, ex: Extraction, loc: Location, inc: Incident, member
             + 0.15 * min(dt / config.MERGE_WINDOW_MIN, 1) + mismatch)
 
 
+def _elsewhere(loc: Location, inc: Incident) -> bool:
+    """True when both have a location and they are too far apart to be the same event."""
+    if loc.lat is None or inc.location.lat is None:
+        return False
+    return geo.haversine_km(loc.lat, loc.lng, inc.location.lat, inc.location.lng) > config.MERGE_MAX_KM
+
+
 def find_incident(store, msg: Message, ex: Extraction, loc: Location) -> tuple[Optional[Incident], str]:
     window = timedelta(minutes=config.MERGE_WINDOW_MIN)
     live = [i for i in store.all("incidents")
             if i.status in (IncidentStatus.open, IncidentStatus.assigned)
             and abs(msg.received_at - i.updated_at) <= window]
-    # 1. reply to our follow-up question (or a bare location pin) joins the sender's own incident
+    # 1. the sender's next message (follow-up reply, location pin, more detail) joins their own incident
     for inc in sorted(live, key=lambda i: i.updated_at, reverse=True):
         if (msg.sender_hash in inc.sender_hashes
-                and (inc.followup_sent or msg.meta.get("location_only"))
+                and (msg.meta.get("location_only") or not _elsewhere(loc, inc))
                 and msg.received_at - inc.updated_at <= timedelta(minutes=config.FOLLOWUP_WINDOW_MIN)):
-            return inc, "reply to follow-up question" if inc.followup_sent else "location pin from the same sender"
+            if msg.meta.get("location_only"):
+                return inc, "location pin from the same sender"
+            return inc, "reply to follow-up question" if inc.followup_sent else "more detail from the same sender"
     # 2. nearest incident by meaning + place + time
     best, best_d = None, 9.0
     for inc in live:
@@ -272,6 +283,13 @@ def followup_for(inc: Incident, language: Optional[str]) -> Optional[str]:
     return None
 
 
+def _kind(question: Optional[str]) -> Optional[str]:
+    """Which field a follow-up asks for, whatever its language."""
+    if question is None:
+        return None
+    return "location" if question in FOLLOWUP.values() else "need"
+
+
 # ------------------------------------------------------------------ entry point
 def verify(store, msg: Message, ex: Extraction, now: datetime) -> tuple[Optional[Incident], str]:
     """Attach msg to an incident (new or existing). Returns (incident or None, explanation).
@@ -280,6 +298,10 @@ def verify(store, msg: Message, ex: Extraction, now: datetime) -> tuple[Optional
     inc, why = find_incident(store, msg, ex, loc)
     if inc is None:
         if not ex.is_help_request:
+            if ex.extractor == "rules" and not ex.needs:     # keywords recognised nothing: never drop it silently
+                msg.status = MessageStatus.review
+                msg.meta["review_reason"] = "keyword rules could not read this message"
+                return None, "rules could not read it: human review"
             msg.status = MessageStatus.info
             return None, "not a help request (information / noise)"
         inc = Incident(id=store.next_id("INC"), created_at=msg.received_at, updated_at=msg.received_at,
@@ -298,9 +320,10 @@ def verify(store, msg: Message, ex: Extraction, now: datetime) -> tuple[Optional
     apply_matrix(inc)
     inc.title = make_title(inc)
     q = followup_for(inc, ex.language)
-    if q and not inc.followup_sent:
+    if q and _kind(q) != _kind(inc.followup_question):   # each missing field is asked once, not every message
         inc.followup_sent = True
         inc.followup_question = q
+        msg.meta["followup_sent"] = True                  # service then skips its status reply
         store.send(msg.sender_hash, msg.channel.value, q, inc.id)
     return inc, why
 

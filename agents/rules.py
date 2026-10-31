@@ -25,8 +25,15 @@ NUM_WORDS = {
 PEOPLE_WORDS = r"(?:log|logo|logon|people|persons|person|jan|members|member|aadmi|bacche|bachche|kids|children|parivar|family|लोग)"
 
 
+def _squash(text: str) -> str:
+    """Collapse repeated letters so panic spellings match: "bachaoooo" -> "bachao", "paani" -> "pani"."""
+    return re.sub(r"(\w)\1+", r"\1", text)
+
+
 def _has(text: str, words: list[str]) -> bool:
-    return any(re.search(rf"(?<![\w]){w}(?![\w])", text) for w in words)
+    sq = _squash(text)
+    return any(re.search(rf"(?<![\w]){w}(?![\w])", text) or re.search(rf"(?<![\w]){_squash(w)}(?![\w])", sq)
+               for w in words)
 
 
 ELDERLY = ["dadi", "dada", "nani", "nana", "dadiji", "naniji", "buzurg", "bujurg", "budhe", "budhi", "boodhe",
@@ -41,7 +48,12 @@ ALONE = ["akela", "akeli", "akele", "alone", "lives alone", "koi nahi hai", "अ
 
 RESCUE = ["phasi", "phase", "phasa", "phans", "fasi", "fase", "fanse", "fasa", "trapped", "stuck", "bachao",
           "bacha lo", "rescue", "doob", "doob rahe", "drowning", "beh gaya", "chhat pe", "chhat par", "roof",
-          "nahi nikal", "nikal nahi", "boat bhejo", "boat", "फंसी", "फंसे", "फंसा", "बचाओ", "डूब"]
+          "nahi nikal", "nikal nahi", "boat bhejo", "boat", "फंसी", "फंसे", "फंसा", "बचाओ", "डूब",
+          # pinned under something (not bare "daba": "dabba" = box)
+          "dab gaya", "dab gayi", "dab gaye", "dabe hue", "daba hua", "dabi hui", "dab rakha", "dab rkha",
+          "dab raha", "dab rha", "dab rahi", "neeche dab", "niche dab", "pinned", "crushed",
+          "दब गया", "दब गई", "दबे", "नीचे दब"]
+PLEA = ["help", "madad", "sahayata", "emergency", "urgent", "sos", "save me", "मदद"]
 MEDICAL_LIFE = ["behosh", "unconscious", "saans nahi", "saans nahi le", "not breathing", "heart attack",
                 "dil ka daura", "bahut khoon", "heavy bleeding", "critical", "mar raha", "dying", "बेहोश"]
 MEDICAL_SERIOUS = ["injured", "ghayal", "khoon", "bleeding", "fracture", "toot gaya", "tut gaya", "toota",
@@ -194,12 +206,13 @@ def extract(text: str) -> Extraction:
         needs.append(Need.shelter)
     if _has(t, EVAC):
         needs.append(Need.evacuation)
-    if not needs and ex.hazard and _has(t, ["help", "madad", "sahayata", "emergency", "urgent", "मदद"]):
+    plea = _has(t, PLEA)
+    if not needs and ex.hazard and plea:
         needs.append(Need.rescue)
-    if not needs and (_has(t, QUESTION_ONLY) or raw_lower.strip().endswith("?")):
+    if not needs and not plea and (_has(t, QUESTION_ONLY) or raw_lower.strip().endswith("?")):
         needs.append(Need.information)
         ex.is_help_request = False
-    if not needs and not ex.hazard and not ex.vulnerable:
+    if not needs and not ex.hazard and not ex.vulnerable and not plea:   # "madad chahiye" alone is still a request
         ex.is_help_request = False
     ex.needs = needs
     return ex
