@@ -88,6 +88,10 @@ a { color: var(--accent); }
 .card { border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
 .card h3 { margin: 6px 0; }
 .route { display: block; text-align: center; margin-top: 10px; padding: 12px; background: var(--accent); color: #fff; border-radius: 8px; text-decoration: none; font-weight: 700; }
+.routebox { margin-top: 10px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.routemap { height: 260px; }
+.routeinfo { padding: 8px 10px; background: #f7fafa; }
+.row .route { flex: 1; margin-top: 0; }
 .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
 .status-grid button { padding: 16px 8px; font-weight: 700; font-size: 15px; }
 .ticks { list-style: none; padding-left: 0; }

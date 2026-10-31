@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, useLive, BAND_COLOR } from './api.js'
+import RouteMap from './RouteMap.jsx'
 
 // Field team PWA (FR12). Offline-first: last assignment cached in localStorage,
 // status taps queued locally and synced when the network returns.
@@ -43,6 +44,26 @@ export default function TeamApp() {
     return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); clearInterval(t) }
   }, [flush])
 
+  // live GPS: position shown on the route map and sent to the dashboard (throttled to every 15 s)
+  const [myPos, setMyPos] = useState(null)
+  const [watchId, setWatchId] = useState(null)
+  const [gpsErr, setGpsErr] = useState('')
+  const lastSent = useRef(0)
+  const toggleGps = () => {
+    if (watchId != null) { navigator.geolocation.clearWatch(watchId); setWatchId(null); setMyPos(null); return }
+    if (!navigator.geolocation) { setGpsErr('GPS not available on this device'); return }
+    const id = navigator.geolocation.watchPosition((p) => {
+      const pos = [p.coords.latitude, p.coords.longitude]
+      setMyPos(pos); setGpsErr('')
+      if (Date.now() - lastSent.current > 15000 && teamId) {
+        lastSent.current = Date.now()
+        api(`/teams/${teamId}/status`, { method: 'PATCH', body: { status: 'location', lat: pos[0], lng: pos[1] } }).catch(() => {})
+      }
+    }, (e) => setGpsErr(`GPS: ${e.message} (phones need https or localhost for GPS)`), { enableHighAccuracy: true })
+    setWatchId(id)
+  }
+  useEffect(() => () => watchId != null && navigator.geolocation.clearWatch(watchId), [watchId])
+
   const tap = (status) => {
     const q = [...load(QKEY, []), { team_id: teamId, status, client_ts: new Date().toISOString() }]
     save(QKEY, q); setQueue(q); flush()
@@ -78,12 +99,17 @@ export default function TeamApp() {
             <div>Hazard: <b>{inc.hazard_detail || inc.hazard || 'none reported'}</b></div>
             <div>ETA: <b>{Math.round(a.eta_min)} min</b></div>
             {inc.red_flags.length > 0 && <div className="flags small">⚑ Unverified report: {inc.red_flags[0]}</div>}
-            {inc.location.lat != null && (
-              <a className="route" href={`https://www.google.com/maps/dir/?api=1&destination=${inc.location.lat},${inc.location.lng}`} target="_blank" rel="noreferrer">
-                Open route in maps
-              </a>
-            )}
           </div>
+          {inc.location.lat != null && <>
+            <RouteMap team={data.team} incident={inc} myPos={myPos} />
+            <div className="row">
+              <button onClick={toggleGps}>{watchId != null ? 'Stop sharing location' : 'Share my location'}</button>
+              <a className="route" href={`https://www.google.com/maps/dir/?api=1&destination=${inc.location.lat},${inc.location.lng}${data.team.type === 'boat' ? '' : '&travelmode=driving'}`} target="_blank" rel="noreferrer">
+                Navigate in Google Maps
+              </a>
+            </div>
+            {gpsErr && <div className="muted small">{gpsErr}</div>}
+          </>}
           <div className="status-grid">
             {a.status === 'approved' && <button onClick={() => tap('en_route')}>On the way</button>}
             <button onClick={() => tap('reached')}>Reached</button>

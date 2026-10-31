@@ -161,6 +161,16 @@ def test_no_one_here_lowers_reputation(r):
     assert r.store.reputation(m.sender_hash) < 1.0
 
 
+def test_gps_ping_moves_team_without_changing_assignment(r):
+    send(r, "S-dadi-1", "Bhai Rampur gali 3 mein meri dadi phasi hai, paani 5 feet hai")
+    a = [x for x in r.store.all("assignments") if x.status.value == "recommended"][0]
+    r.decide(a.id, ApproveIn())
+    r.team_status(a.team_id, TeamStatusIn(status="location", lat=30.3111, lng=78.0400))
+    t = r.store.get("teams", a.team_id)
+    assert (t.lat, t.lng) == (30.3111, 78.0400) and t.status.value == "busy"
+    assert r.store.get("assignments", a.id).status.value == "approved"
+
+
 def test_reject_bans_pair(r):
     send(r, "S-dadi-1", "Bhai Rampur gali 3 mein meri dadi phasi hai, paani 5 feet hai")
     a = [x for x in r.store.all("assignments") if x.status.value == "recommended"][0]

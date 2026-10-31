@@ -12,7 +12,6 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import threading
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
@@ -25,7 +24,7 @@ from rag import sop
 from shared import config
 from shared.schemas import (ApproveIn, Assignment, AssignmentStatus, Band, Channel, Extraction, Incident,
                             IncidentStatus, Message, MessageIn, MessageStatus, Need, Team, TeamStatus,
-                            TeamStatusIn, TeamType, VerifyIn, Vulnerable, VulnerableResident, now_utc)
+                            TeamStatusIn, VerifyIn, Vulnerable, VulnerableResident, now_utc)
 from simulation import surge
 
 log = logging.getLogger("rahat.service")
@@ -227,6 +226,10 @@ class Rahat:
             if body.lat is not None and body.lng is not None:
                 team.lat, team.lng = body.lat, body.lng
             team.last_seen = now_utc()
+            if body.status == "location":                 # GPS ping from the PWA: move the marker only
+                self.store.put("teams", team)
+                self.emit("team", id=team_id)
+                return {"team": team, "assignment": None, "incident": None}
             a = self.current_assignment(team_id)
             inc = self.store.get("incidents", a.incident_id) if a else None
             before = {"team": team.status.value, "assignment": a.status.value if a else None}
