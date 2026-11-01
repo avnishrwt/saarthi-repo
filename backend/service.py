@@ -17,7 +17,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from typing import Callable, Optional
 
-from agents import geo, llm, pipeline, priority, verifier
+from agents import geo, llm, pipeline, priority, rules, verifier
 from backend import optimizer
 from backend.db import Store
 from rag import sop
@@ -44,6 +44,8 @@ REPLY_NEED_PLACE = "Team bhejne ke liye aapki jagah chahiye: gali, mohalla ya pa
 REPLY_EN_ROUTE ="RAHAT: {team} aapki taraf aa rahi hai. {eta} Ho sake toh oonchi jagah pe rahein."
 REPLY_INFO = ("RAHAT: Is message mein madad ki request nahi mili. Agar madad chahiye toh "
               "jagah (gali / landmark) aur kitne log hain, yeh likh kar bhejein.")
+REPLY_STATUS = ("RAHAT: Update ke liye dhanyavaad, control room ko dikha diya gaya hai. "
+                "Agar ab bhi kisi ko madad chahiye toh jagah aur kitne log hain, likh kar bhejein.")
 REPLY_REVIEW = "RAHAT: Aapka message mil gaya hai. Control room ka ek vyakti ise khud dekhega."
 UPDATE_DISPATCHED = "RAHAT: {team} aapki taraf bheji gayi hai. Andaazan {eta} min. Ho sake toh oonchi jagah pe rahein."
 UPDATE_REACHED = "RAHAT: {team} aapki jagah pahunch gayi hai."
@@ -155,7 +157,8 @@ class Rahat:
             if msg.channel.value not in CITIZEN_CHANNELS or msg.meta.get("followup_sent"):
                 return
             if inc is None:
-                text = REPLY_REVIEW if msg.status == MessageStatus.review else REPLY_INFO
+                text = (REPLY_REVIEW if msg.status == MessageStatus.review
+                        else REPLY_STATUS if rules.is_status_update(msg.raw_text or "") else REPLY_INFO)
             else:
                 inc = self.store.get("incidents", inc.id)
                 act = [a for a in self.store.all("assignments") if a.incident_id == inc.id and a.status in ACTIVE]

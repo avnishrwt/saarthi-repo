@@ -16,10 +16,11 @@ next message joins their own live incident unless it names a different place
 """
 from __future__ import annotations
 
+import re
 from datetime import datetime, timedelta
 from typing import Optional
 
-from agents import embeddings, geo, priority
+from agents import embeddings, geo, priority, rules
 from shared import config
 from shared.schemas import (Band, Extraction, HazardType, Incident, IncidentStatus, Location, MedicalSeverity,
                             Message, MessageStatus, Need, Vulnerable)
@@ -56,6 +57,41 @@ def resolve_location(msg: Message, ex: Extraction) -> Location:
 
 
 # ------------------------------------------------------------------ merging
+SUBPLACE = re.compile(r"\b(?:gali|galli|lane|street|sector|block|गली)\s*(?:no|number|नंबर)?\s*(\d{1,3})\b")
+
+
+def _subplaces(text: str) -> set[str]:
+    """'deep nagar gali 4' -> {'4'}: two reports from one colony but different lanes are different cases."""
+    return set(SUBPLACE.findall(geo.normalize(text or "")))
+
+
+def _is_copy(msg: Message, members: list[Message]) -> bool:
+    key = " ".join((msg.raw_text or "").lower().split())
+    texts = [" ".join(m.raw_text.lower().split()) for m in members if m.raw_text]
+    return bool(texts) and float(max(embeddings.similarities(key, texts))) >= config.COPY_PASTE_SIM
+
+
+def conflict(msg: Message, ex: Extraction, inc: Incident, members: list[Message]) -> Optional[str]:
+    """A named reason why msg must NOT join inc, even if place and words look close."""
+    if not ex.is_help_request and msg.sender_hash not in inc.sender_hashes:
+        # "sab theek hai" from someone else must never mark another person's case as fine
+        return "status update from another sender (never merged into someone else's case)"
+    mine = _subplaces(msg.raw_text)
+    theirs = set().union(*(_subplaces(m.raw_text) for m in members)) if members else set()
+    if mine and theirs and not (mine & theirs):
+        return f"different lane (gali {'/'.join(sorted(mine))} vs {'/'.join(sorted(theirs))})"
+    a = rules.stated_people(geo.normalize(msg.raw_text or ""))
+    stated = [n for n in (rules.stated_people(geo.normalize(m.raw_text or "")) for m in members) if n]
+    if a and stated:
+        b = max(stated)
+        if max(a, b) >= config.STATED_PEOPLE_CONFLICT * min(a, b):
+            return f"different number of people written ({a} vs {b})"
+    if any(f.startswith("copy_paste_burst") for f in inc.red_flags) and not _is_copy(msg, members):
+        # a real report is judged on its own, never pulled into a suspected copy-paste cluster
+        return "incident is a suspected copy-paste burst and this message is not a copy"
+    return None
+
+
 def _distance(msg: Message, ex: Extraction, loc: Location, inc: Incident, members: list[Message]) -> float:
     if inc.location.lat is None or loc.lat is None:
         return 9.0
@@ -63,9 +99,11 @@ def _distance(msg: Message, ex: Extraction, loc: Location, inc: Incident, member
     km = 0.0 if same_place else geo.haversine_km(loc.lat, loc.lng, inc.location.lat, inc.location.lng)
     if km > config.MERGE_MAX_KM:
         return 9.0
-    q = embeddings.concept_text(msg.raw_text, ex)
-    others = [embeddings.concept_text(m.raw_text, m.extraction) for m in members]
+    q = embeddings.concept_text(msg.raw_text, ex, place=False)
+    others = [embeddings.concept_text(m.raw_text, m.extraction, place=False) for m in members]
     sim = float(max(embeddings.similarities(q, others))) if others else 0.0
+    if sim < config.MERGE_MIN_TEXT_SIM:
+        return 9.0                     # same place, but the messages describe different things
     dt = abs((msg.received_at - inc.updated_at).total_seconds()) / 60
     a = {n for n in ex.needs if n != Need.information}
     b = {n for n in inc.needs if n != Need.information}
@@ -94,16 +132,22 @@ def find_incident(store, msg: Message, ex: Extraction, loc: Location) -> tuple[O
             if msg.meta.get("location_only"):
                 return inc, "location pin from the same sender"
             return inc, "reply to follow-up question" if inc.followup_sent else "more detail from the same sender"
-    # 2. nearest incident by meaning + place + time
-    best, best_d = None, 9.0
+    # 2. nearest incident by meaning + place + time, unless a named conflict keeps them apart
+    best, best_d, kept_apart = None, 9.0, []
     for inc in live:
         members = [m for m in (store.get("messages", mid) for mid in inc.message_ids) if m]
         d = _distance(msg, ex, loc, inc, members)
+        if d >= config.MERGE_EPS:
+            continue
+        why = conflict(msg, ex, inc, members)
+        if why:
+            kept_apart.append(f"not merged with {inc.id}: {why}")
+            continue
         if d < best_d:
             best, best_d = inc, d
-    if best is not None and best_d < config.MERGE_EPS:
+    if best is not None:
         return best, f"merged (distance {best_d:.2f} < {config.MERGE_EPS})"
-    return None, ""
+    return None, "; ".join(kept_apart)
 
 
 def _merge_fields(inc: Incident, ex: Extraction, loc: Location) -> None:
@@ -127,9 +171,10 @@ def _merge_fields(inc: Incident, ex: Extraction, loc: Location) -> None:
         inc.hazard = ex.hazard
     if ex.water_depth_ft and (inc.water_depth_ft or 0) < ex.water_depth_ft:
         inc.water_depth_ft = ex.water_depth_ft
-    if ex.hazard_detail and (not inc.hazard_detail or "roof" in ex.hazard_detail):
+    rank = lambda d: 3 if d and "roof" in d else 2 if d and "fast-moving" in d else 1 if d and "rising" in d else 0
+    if ex.hazard_detail and (not inc.hazard_detail or rank(ex.hazard_detail) > rank(inc.hazard_detail)):
         inc.hazard_detail = ex.hazard_detail
-    if inc.water_depth_ft and (not inc.hazard_detail or "roof" not in inc.hazard_detail):
+    if inc.water_depth_ft and not rank(inc.hazard_detail):
         inc.hazard_detail = f"water ~{inc.water_depth_ft:g} ft"
     if SEVERITY[ex.medical] > SEVERITY[inc.medical]:
         inc.medical = ex.medical
@@ -290,6 +335,18 @@ def _kind(question: Optional[str]) -> Optional[str]:
     return "location" if question in FOLLOWUP.values() else "need"
 
 
+def _note_nearby_update(store, msg: Message, loc: Location) -> None:
+    """'aag bujh gayi' at the same landmark as an open case: the operator should see it on that case,
+    but it must not change the case by itself (it may be about a different house)."""
+    if not loc.place_id:
+        return
+    for inc in store.all("incidents"):
+        if (inc.status in (IncidentStatus.open, IncidentStatus.assigned) and inc.location.place_id == loc.place_id
+                and msg.sender_hash not in inc.sender_hashes):
+            inc.notes.append(f"update from another sender nearby, please check: \"{(msg.raw_text or '')[:120]}\"")
+            store.put("incidents", inc)
+
+
 # ------------------------------------------------------------------ entry point
 def verify(store, msg: Message, ex: Extraction, now: datetime) -> tuple[Optional[Incident], str]:
     """Attach msg to an incident (new or existing). Returns (incident or None, explanation).
@@ -298,15 +355,17 @@ def verify(store, msg: Message, ex: Extraction, now: datetime) -> tuple[Optional
     inc, why = find_incident(store, msg, ex, loc)
     if inc is None:
         if not ex.is_help_request:
-            if ex.extractor == "rules" and not ex.needs:     # keywords recognised nothing: never drop it silently
+            # keywords recognised nothing: never drop it silently ("aag bujh gayi" IS recognised: a status update)
+            if ex.extractor == "rules" and not ex.needs and not rules.is_status_update(msg.raw_text or ""):
                 msg.status = MessageStatus.review
                 msg.meta["review_reason"] = "keyword rules could not read this message"
                 return None, "rules could not read it: human review"
             msg.status = MessageStatus.info
-            return None, "not a help request (information / noise)"
+            _note_nearby_update(store, msg, loc)
+            return None, "not a help request (information / status update)"
         inc = Incident(id=store.next_id("INC"), created_at=msg.received_at, updated_at=msg.received_at,
                        location=loc, source=msg.meta.get("source", "messages"))
-        why = "new incident"
+        why = "new incident" + (f" ({why})" if why else "")
     _merge_fields(inc, ex, loc)
     inc.message_ids.append(msg.id)
     if msg.sender_hash not in inc.sender_hashes:

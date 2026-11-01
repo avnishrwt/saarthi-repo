@@ -39,9 +39,11 @@ def _hazard(inc: Incident) -> tuple[float, str]:
     if inc.hazard in (HazardType.fire, HazardType.collapse, HazardType.landslide):
         return 9.0, inc.hazard.value
     if inc.hazard == HazardType.water:
-        if inc.hazard_detail and "roof" in inc.hazard_detail:
+        if inc.hazard_detail and ("roof" in inc.hazard_detail or "fast-moving" in inc.hazard_detail):
             return 9.0, inc.hazard_detail
         d = inc.water_depth_ft
+        if inc.hazard_detail and "rising" in inc.hazard_detail:
+            return max(7.0, 8.0 if d and d >= 5 else 0.0), inc.hazard_detail
         if d is None:
             return 5.0, "water, depth not stated"
         if d >= 5:

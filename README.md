@@ -22,7 +22,7 @@ cd frontend; npm install; npm run dev     # http://localhost:5173
 | API docs | `http://localhost:8000/docs` |
 
 Or run `npm run build` once; FastAPI then serves everything at `http://localhost:8000/ui/`.
-Tests: `.\.venv\Scripts\python -m pytest -q` (11 known-answer tests, including "optimizer sends Team A to dadi, greedy does not").
+Tests: `.\.venv\Scripts\python -m pytest -q` (35 known-answer tests, including "optimizer sends Team A to dadi, greedy does not" and "two lanes of one colony stay two cases").
 
 ## The map
 Real Dehradun places, with coordinates from OpenStreetMap (Nominatim) in `data/locations.csv`. Two flood zones: the
@@ -32,11 +32,11 @@ Story: dadi in Deep Nagar, food request at a Dalanwala school, roof family in Ma
 Kamla ji near Rispana Bridge, and the fake from Har Ki Pauri (Haridwar, outside the affected area).
 
 ## Demo flow (about 4 min)
-1. **Simulate IMD alert**: Surge Mode goes to STANDBY and proactive calls start.
+1. **Simulate IMD alert**: Surge Mode goes to STANDBY and (simulated) proactive callbacks are queued. Real phone/IVR calls are future scope.
 2. **Replay burst**: the flood-night messages arrive. Three dadi messages become one CRIT incident, the copy-paste fake gets red flags + VERIFY, noise is filtered out, and a follow-up SMS goes to the vague sender.
 3. Open INC (dadi): priority breakdown, confidence, recommended **Boat Team A, ETA 10 min**. Click **Approve**.
 4. **RAHAT vs greedy**: greedy gives dadi a 20 min wait; RAHAT gives 10 min.
-5. Citizen sim: send Ramesh uncle's lone SMS. It stays CRIT, a boat is recommended, and the callback runs in parallel.
+5. Citizen sim: send Ramesh uncle's lone SMS. It stays CRIT, a boat is recommended, and a (simulated) callback runs in parallel.
 6. Citizen sim: Kamla ji **no_answer** creates a CRIT incident with no message from her.
 7. Team PWA (Boat Team A): **Rescued**. The optimizer re-solves and the next assignment appears.
 
@@ -74,6 +74,8 @@ memory only, to send replies; the database stores only the hashed id.
 - **Optimizer cost is priority-weighted by default** (`COST_MODE=weighted`): `travel × (1 + P/10) − λP + penalty`. With the PRD's `travel − λP`, the λP terms cancel whenever every incident gets a team, so it only minimises total travel and can still make a critical case wait. Set `RAHAT_COST_MODE=prd` for the exact PRD formula.
 - **Team A/B numbers are 5/10/6/20 min, not 5/10/6/30.** With straight-line travel, 30 min is geometrically impossible together with the other three numbers. Use 20 in the pitch.
 - **Merging** = incremental DBSCAN with min_samples=1 on `0.6·text + 0.25·place + 0.15·time (+ need-mismatch)`. A message with no location joins only its own sender's follow-up.
+  **Same place is not enough**: the texts must also be similar (≥ 0.40, place excluded so it is not counted twice), and a named rule keeps two reports apart when they mention different lanes (gali 2 vs gali 4), clearly different written head-counts (200 students vs 3 log), or when one is a real report and the other a suspected copy-paste burst. Every "kept apart" reason is written to the audit log.
+  **Status updates** ("aag bujh gayi, sab bahar aa gaye") never create a case and never change someone else's case; they appear as a "please check" note on the open case at that landmark.
 - **The LLM never allocates teams.** OR-Tools gives the same answer every time and every cost is shown.
 
 ## Before the pitch (still open)

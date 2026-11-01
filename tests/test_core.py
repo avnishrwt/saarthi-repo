@@ -349,3 +349,70 @@ def test_sop_rag_only_cites_real_passages(monkeypatch):
     assert all("PDF p.9" in it["source"] and "§8.1" in it["source"] for it in r["items"])   # never the planning chapter
     fire = Incident(id="X", created_at=now, updated_at=now, needs=[Need.rescue], hazard=HazardType.fire)
     assert sop.checklist(fire)["status"] == "NOT_IN_SOP"
+
+
+# ----------------------------------------------------------------- merging: same place is not enough
+def test_extractor_knows_common_flood_words():
+    assert Need.rescue in rules.extract("mujhe aur meri wife ko nikalo mothrowala, hum dono 75+ hai").needs
+    assert rules.extract("mujhe aur meri wife ko nikalo mothrowala, hum dono 75+ hai").people_count == 2
+    assert Need.rescue in rules.extract("Har ki pauri pe mera bhai phansa hai").needs
+    assert Need.food in rules.extract("ISBT ke paas bachon ke liye doodh chahiye, 10 chhote bacche").needs
+    assert rules.extract("ISBT ke paas bachon ke liye doodh chahiye, 10 chhote bacche").people_count == 10
+    assert Need.medical in rules.extract("Dalanwala me dadi ka oxygen machine band ho gaya").needs
+    assert Need.medical in rules.extract("Nehru colony me pregnant didi ko dard shuru ho gaya").needs
+    assert rules.extract("GEHU ke paas 3 log nadi ke kinare phase, paani tez").hazard_detail.startswith("fast-moving")
+    # status updates and questions are not new emergencies
+    assert not rules.extract("paltan bazar aag bujh gayi sab bahar aa gaye").is_help_request
+    assert not rules.extract("Rispana pul toot gaya kya? koi update").is_help_request
+    assert not rules.extract("kanwali road pe naali ka paani ghar me, sab theek hai bas safai chahiye").is_help_request
+    # an explicit plea still counts even if the sender says others are safe
+    assert Need.rescue in rules.extract("baaki sab theek hai par dadi phasi hai deep nagar").needs
+
+
+def test_different_lanes_stay_separate(r):
+    a = send(r, "L1", "Deep Nagar gali 4 me nani phasi hai paani 4 feet")
+    b = send(r, "L2", "Deep Nagar gali 2 me paani kamar tak, do bacche phase hai")
+    c = send(r, "L3", "deep nagar gali 4 buzurg aurat phasi hai boat bhejo")
+    a, b, c = (r.store.get("messages", m.id) for m in (a, b, c))
+    assert a.incident_id == c.incident_id            # same lane, same story: one case
+    assert b.incident_id != a.incident_id            # other lane: its own case
+
+
+def test_different_emergencies_at_one_landmark_stay_separate(r):
+    a = send(r, "K1", "Kargi chowk ke paas mere papa ko heart attack aaya hai, ambulance nahi aa rahi")
+    b = send(r, "K2", "GEHU ke paas 3 log nadi ke kinare phase, paani tez")
+    c = send(r, "K3", "graphic era ke hostel ke neeche paani, 200 students andar safe hai par khana kal tak ka hai")
+    ids = {r.store.get("messages", m.id).incident_id for m in (a, b, c)}
+    assert len(ids) == 3
+
+
+def test_real_message_not_pulled_into_copy_paste_fake(r):
+    for k in range(4):
+        send(r, f"F{k}", "URGENT 100 log phase hai har ki pauri ghat pe turant NDRF bhejo")
+    real = send(r, "R1", "Har ki pauri pe mera bhai phansa hai, wahan bhi paani badh raha")
+    real = r.store.get("messages", real.id)
+    inc =r.store.get("incidents", real.incident_id)
+    assert inc is not None and len(set(inc.sender_hashes)) == 1      # its own case, not the fake cluster
+    assert not any(f.startswith("copy_paste_burst") for f in inc.red_flags)
+
+
+def test_status_update_never_marks_someone_elses_case(r):
+    fire = send(r, "P1", "paltan bazar me aag lagi hai 3 log andar phase hai")
+    upd = send(r, "P2", "paltan bazar aag bujh gayi sab bahar aa gaye")
+    upd = r.store.get("messages", upd.id)
+    inc = r.store.get("incidents", r.store.get("messages", fire.id).incident_id)
+    assert upd.incident_id is None and upd.status.value == "info"
+    assert inc.status.value in ("open", "assigned")                  # NOT closed by a stranger's message
+    assert any("update from another sender" in n for n in inc.notes)  # but the operator sees it on the case
+
+
+def test_status_update_gets_a_thank_you_not_an_error(r):
+    from backend.service import hash_sender
+    send(r, "U1", "paltan bazar aag bujh gayi sab bahar aa gaye")
+    texts = [m["text"] for m in r.store.outbox(hash_sender("U1"))]
+    assert any("Update ke liye dhanyavaad" in t for t in texts)
+
+
+def test_lane_number_is_not_a_head_count():
+    assert rules.extract("deep nagar gali 4 buzurg aurat phasi hai boat bhejo").people_count == 1
+    assert rules.extract("gali no 3 me 5 log phase hai").people_count == 5

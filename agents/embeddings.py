@@ -23,13 +23,15 @@ from shared.schemas import Extraction
 log = logging.getLogger("rahat.embeddings")
 
 
-def concept_text(raw_text: str, ex: Extraction | None) -> str:
+def concept_text(raw_text: str, ex: Extraction | None, place: bool = True) -> str:
+    """place=False for merging: the verifier already measures place as distance, so a place tag here
+    counted it twice and made ANY two messages from one landmark look alike."""
     if ex is None:
         return raw_text
     tags = [f"need_{n.value}" for n in ex.needs] + [f"vuln_{v.value}" for v in ex.vulnerable]
     if ex.hazard:
         tags.append(f"hazard_{ex.hazard.value}")
-    if ex.place_id:
+    if ex.place_id and place:
         tags.append(f"place_{ex.place_id}")
     return f"{raw_text} || " + " ".join(tags * 2)   # tags repeated: the meaning should outweigh wording
 

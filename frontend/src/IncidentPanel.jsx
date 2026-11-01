@@ -86,6 +86,10 @@ export default function IncidentPanel({ id, state, onClose, version }) {
         : i.status === 'resolved' ? 'Done: case resolved' : i.status === 'false' ? 'Closed: marked as a false report'
         : ACTION_LABEL[i.action] || i.action}</div>
     {err && <div className="err">{err}</div>}
+    {i.notes.filter((n) => n.startsWith('update from another sender nearby')).map((n, k) => (
+      <div key={k} className="nearby-update">📣 <b>Someone else nearby sent an update.</b> It was <u>not</u> added to this case
+        (it may be about another house). Please check: {n.replace(/^update from another sender nearby, please check: /, '')}</div>
+    ))}
 
     <div className="tiles">
       {tiles.map((t) => (

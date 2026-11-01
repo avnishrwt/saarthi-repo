@@ -284,6 +284,7 @@ button.light:hover { background: rgba(255,255,255,.22); border-color: #fff; }
 .ihead-x:hover { background: rgba(255,255,255,.32); }
 .ihead h2 { margin: 8px 0 0; font-size: 22px; line-height: 1.25; }
 .inext { margin: 14px 20px 0; background: #fff; border-left: 5px solid var(--brand); border-radius: 8px; padding: 10px 14px; font-size: 15px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.nearby-update { margin: 10px 20px 0; background: #fffbeb; border: 1px solid #fcd34d; border-left: 5px solid #d97706; border-radius: 8px; padding: 9px 14px; font-size: 14px; color: #78350f; }
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; padding: 14px 20px 0; }
 .tile { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
 .tile-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }

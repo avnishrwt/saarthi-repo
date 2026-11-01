@@ -22,7 +22,14 @@ NUM_WORDS = {
     "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8,
     "nine": 9, "ten": 10, "twenty": 20, "fifty": 50, "hundred": 100,
 }
-PEOPLE_WORDS = r"(?:log|logo|logon|people|persons|person|jan|members|member|aadmi|bacche|bachche|kids|children|parivar|family|लोग)"
+PEOPLE_WORDS = (r"(?:log|logo|logon|people|persons|person|jan|members|member|aadmi|admi|ladka|ladki|aurat|mahila|"
+                r"bacche|bachche|bacchon|bachon|kids|children|parivar|family|students|student|yatri|yaatri|"
+                r"passengers|marij|mariz|marijon|marizon|mareez|patients|buzurg|buzurgon|bujurg|bujurgon|लोग)")
+# "10 chhote bacche", "2 bade log": one size word allowed between the number and the people word
+SIZE = r"(?:(?:chhote|chote|chhoti|choti|bade|badi|buzurg|bujurg)\s+)?"
+# "mere papa", "mera bhai": one named person (needs the possessive: a bare "bhai" is usually "bro")
+RELATIVE = re.compile(r"\b(?:mera|meri|mere|my)\s+(?:papa|pitaji|father|dad|mummy|maa|mother|mom|bhai|brother|"
+                      r"behen|bahan|sister|didi|beta|beti|son|daughter|chacha|chachi|mama|mami|pati|husband|patni)\b")
 
 
 def _squash(text: str) -> str:
@@ -46,34 +53,54 @@ DISABLED = ["wheelchair", "viklang", "divyang", "disabled", "handicapped", "blin
 PREGNANT = ["pregnant", "garbhvati", "garbhwati", "delivery", "labour pain", "labor pain", "गर्भवती"]
 ALONE = ["akela", "akeli", "akele", "alone", "lives alone", "koi nahi hai", "अकेला", "अकेली"]
 
-RESCUE = ["phasi", "phase", "phasa", "phans", "fasi", "fase", "fanse", "fasa", "trapped", "stuck", "bachao",
-          "bacha lo", "rescue", "doob", "doob rahe", "drowning", "beh gaya", "chhat pe", "chhat par", "roof",
-          "nahi nikal", "nikal nahi", "boat bhejo", "boat", "फंसी", "फंसे", "फंसा", "बचाओ", "डूब",
+RESCUE = ["phasi", "phase", "phasa", "phans", "phansa", "phansi", "phanse", "fasi", "fase", "fanse", "fasa",
+          "fansa", "fansi", "trapped", "stuck", "bachao", "bacha lo", "rescue", "doob", "doob rahe", "drowning",
+          "beh gaya", "beh gaye", "beh gayi", "bah gaya", "bah gaye", "chhat pe", "chhat par", "roof",
+          "nahi nikal", "nikal nahi", "nikalo", "nikaalo", "nikal lo", "boat bhejo", "boat",
+          "फंसी", "फंसे", "फंसा", "बचाओ", "डूब", "निकालो",
           # pinned under something (not bare "daba": "dabba" = box)
           "dab gaya", "dab gayi", "dab gaye", "dabe hue", "daba hua", "dabi hui", "dab rakha", "dab rkha",
           "dab raha", "dab rha", "dab rahi", "neeche dab", "niche dab", "pinned", "crushed",
           "दब गया", "दब गई", "दबे", "नीचे दब"]
 PLEA = ["help", "madad", "sahayata", "emergency", "urgent", "sos", "save me", "मदद"]
 MEDICAL_LIFE = ["behosh", "unconscious", "saans nahi", "saans nahi le", "not breathing", "heart attack",
-                "dil ka daura", "bahut khoon", "heavy bleeding", "critical", "mar raha", "dying", "बेहोश"]
-MEDICAL_SERIOUS = ["injured", "ghayal", "khoon", "bleeding", "fracture", "toot gaya", "tut gaya", "toota",
-                   "chot", "chot lagi", "tez bukhar", "high fever", "labour pain", "delivery", "saans",
-                   "breathing problem", "ambulance", "doctor", "medical", "घायल", "खून"]
+                "dil ka daura", "bahut khoon", "heavy bleeding", "critical", "mar raha", "dying",
+                "oxygen band", "oxygen khatam", "oxygen machine band", "oxygen nahi", "बेहोश"]
+# "toot gaya" alone is not medical ("pul toot gaya" = the bridge broke): only with a body part
+MEDICAL_SERIOUS = ["injured", "ghayal", "khoon", "bleeding", "fracture", "pair toot", "haath toot", "haddi toot",
+                   "taang toot", "leg toot", "chot", "chot lagi", "tez bukhar", "high fever", "labour pain",
+                   "delivery", "saans", "breathing problem", "ambulance", "doctor", "medical", "oxygen",
+                   "current laga", "karant", "bijli ke taar", "घायल", "खून"]
 MEDICAL_MINOR = ["bukhar", "fever", "dard", "pain", "ulti", "vomit", "loose motion", "diarrhea"]
-FOOD = ["khana", "khaana", "food", "bhookh", "bhook", "bhukhe", "ration", "rashan", "roti", "खाना", "भूख"]
+FOOD = ["khana", "khaana", "food", "bhookh", "bhook", "bhukhe", "ration", "rashan", "roti", "doodh", "dudh",
+        "milk", "baby food", "खाना", "भूख", "दूध"]
 WATER_NEED = ["peene ka paani", "pine ka pani", "peene ka pani", "drinking water", "pani khatam", "paani khatam",
-              "पीने का पानी"]
+              "paani ki bottle", "pani ki bottle", "paani ki botal", "water bottle", "पीने का पानी"]
 MEDICINE = ["dawai", "dawa", "davai", "medicine", "insulin", "tablet", "दवाई", "दवा"]
-SHELTER = ["shelter", "rehne ki jagah", "chhat nahi", "ghar gir", "camp"]
+# "relief camp me" means they are already in a shelter: only asking for one counts
+SHELTER = ["shelter", "rehne ki jagah", "chhat nahi", "ghar gir", "camp chahiye", "camp bhejo"]
+WELFARE = ["phone nahi utha", "phone nahi uth", "phone band", "sampark nahi", "contact nahi", "no contact",
+           "not answering", "koi khabar nahi", "फोन नहीं उठा", "संपर्क नहीं"]
+# a status update, not a request: "aag bujh gayi sab bahar aa gaye", "sab theek hai bas safai chahiye".
+# Only removes the rescue we INFERRED from "water + people"; an explicit "phase hai" / "bachao" still counts.
+SAFE = ["sab theek", "sab thik", "sab safe", "safe hai", "sab bahar aa gaye", "sab bahar aa gye", "bahar aa gaye",
+        "bujh gayi", "bujh gaya", "bujh gai", "khatra nahi", "khatra tal", "all safe", "everyone safe", "we are safe",
+        "madad nahi chahiye", "help nahi chahiye", "सब ठीक", "सुरक्षित हैं"]
 EVAC = ["nikalna hai", "evacuate", "evacuation", "bahar nikalo", "shift karna"]
 
 WATER = ["paani", "pani", "water", "flood", "baadh", "badh", "doob", "pani bhar", "पानी", "बाढ़"]
+# moving water sweeps people away: scored like a roof rescue, not like "water entering house"
+SWIFT = ["paani tez", "pani tez", "tez paani", "tez pani", "tez bahav", "bahav tez", "nadi ke kinare", "nadi me",
+         "nadi mein", "beh rahe", "beh rahi", "beh gaye", "beh gaya", "bah rahe", "current tez", "swift"]
+RISING = ["badh raha", "badh rahi", "badh gaya", "tezi se badh", "rising", "बढ़ रहा"]
+# running out of these is dangerous within hours, not a routine supply request
+VITAL_MEDS = ["insulin", "dialysis", "oxygen cylinder", "inhaler"]
 FIRE = ["aag", "fire", "jal raha", "jal rahi", "dhuan", "smoke", "आग"]
 COLLAPSE = ["gir gaya", "gir gayi", "collapse", "collapsed", "malba", "debris", "deewar giri", "diwar giri",
             "makaan gira", "building giri", "गिर गया", "मलबा"]
 LANDSLIDE = ["landslide", "bhooskhalan", "pahad gira", "pahad khisak", "bhuskhalan", "भूस्खलन"]
 
-QUESTION_ONLY = ["kab tak", "kab aayegi", "kab aayega", "kya hal", "update", "news", "kab rukegi", "kab ruke",
+QUESTION_ONLY = ["kab tak", "helpline", "hai kya", "hain kya", "kab aayegi", "kab aayega", "kya hal", "update", "news", "kab rukegi", "kab ruke",
                  "when will", "koi batao", "school band", "kal school"]
 
 
@@ -95,23 +122,38 @@ def _people_count(t: str) -> tuple[Optional[int], bool]:
     m = re.search(rf"(\d+)\s*(?:-|se|to|ya)\s*(\d+)\s*{PEOPLE_WORDS}", t)
     if m:
         return max(int(m.group(1)), int(m.group(2))), False
-    m = re.search(rf"(\d+)\s*{PEOPLE_WORDS}", t)
-    if m:
-        return int(m.group(1)), False
-    for w, n in NUM_WORDS.items():
-        if re.search(rf"\b{w}\s+{PEOPLE_WORDS}", t):
-            return n, False
+    n = stated_people(t)
+    if n is not None:
+        return n, False
+    if re.search(r"\b(?:hum|ham)\s+dono\b|\bdono\s+" + PEOPLE_WORDS, t) or re.search(r"\bmujhe aur meri?\b", t):
+        return 2, False
     if _has(t, ["pura parivar", "poora parivar", "puri family", "whole family", "family", "parivar"]):
         return 4, True          # estimated, shown as estimated on the dashboard
     if _has(t, ALONE) or re.search(r"\bmain\b.*\b(hu|hoon|hun)\b", t):
         return 1, False
+    if len(RELATIVE.findall(t)) == 1 and not _has(t, ["aur", "and", "sab", "family", "parivar"]):
+        return 1, False         # "mere papa ko heart attack" -> one person
     if _has(t, ELDERLY + PREGNANT) and not _has(t, CHILD):
         return 1, False         # "meri dadi phasi hai" -> one person
     return None, False
 
 
-def _age(t: str) -> Optional[int]:
-    m = re.search(r"(\d{2,3})\s*(?:saal|sal|years|yrs|year|baras|वर्ष|साल)", t)
+def stated_people(t: str) -> Optional[int]:
+    """Only a number the sender actually wrote ("5 log", "do bacche", "200 students"); None otherwise.
+    The verifier uses it to keep apart two cases at one place (200 students vs 3 people)."""
+    # "gali 4 buzurg aurat" is lane 4, not 4 people
+    t = re.sub(r"\b(?:gali|galli|lane|street|sector|block|ward|no|number|house|makaan|flat|plot)\s*\d+", " ", t)
+    m = re.search(rf"(\d+)\s*{SIZE}{PEOPLE_WORDS}", t)
+    if m:
+        return int(m.group(1))
+    for w, n in NUM_WORDS.items():
+        if re.search(rf"\b{w}\s+{SIZE}{PEOPLE_WORDS}", t):
+            return n
+    return None
+
+
+def _age(t: str, raw: str = "") -> Optional[int]:
+    m = re.search(r"(\d{2,3})\s*(?:saal|sal|years|yrs|year|baras|वर्ष|साल)", t) or re.search(r"\b(\d{2})\s*\+", raw)
     return int(m.group(1)) if m else None
 
 
@@ -145,7 +187,7 @@ def extract(text: str) -> Extraction:
             ex.location_text = f"{place.name} ({lm.group(1)})"
 
     # vulnerable persons
-    age = _age(t)
+    age = _age(t, raw_lower)
     if _has(t, ELDERLY) or (age is not None and age >= 60):
         ex.vulnerable.append(Vulnerable.elderly)
     if _has(t, CHILD):
@@ -175,6 +217,10 @@ def extract(text: str) -> Extraction:
         ex.water_depth_ft = depth
         if _has(t, ["chhat pe", "chhat par", "roof", "chhat tak", "chat pe"]):
             ex.hazard_detail = "people on roof / water near roof"
+        elif _has(t, SWIFT):
+            ex.hazard_detail = "fast-moving water / river bank"
+        elif _has(t, RISING):
+            ex.hazard_detail = "water rising" + (f" ~{depth:g} ft" if depth is not None else "")
         elif depth is not None:
             ex.hazard_detail = f"water ~{depth:g} ft"
         else:
@@ -183,7 +229,8 @@ def extract(text: str) -> Extraction:
     # medical
     if _has(t, MEDICAL_LIFE):
         ex.medical = MedicalSeverity.life_threatening
-    elif _has(t, MEDICAL_SERIOUS):
+    elif (_has(t, MEDICAL_SERIOUS) or _has(t, VITAL_MEDS)
+          or (Vulnerable.pregnant in ex.vulnerable and _has(t, ["dard", "pain"]))):
         ex.medical = MedicalSeverity.serious
     elif _has(t, MEDICAL_MINOR):
         ex.medical = MedicalSeverity.minor
@@ -192,7 +239,10 @@ def extract(text: str) -> Extraction:
     needs: list[Need] = []
     in_water_with_person = ex.hazard == HazardType.water and (
         ex.vulnerable or ex.people_count or _has(t, ["ghar", "house", "andar", "inside"]))
-    if _has(t, RESCUE) or in_water_with_person or ex.hazard in (HazardType.collapse, HazardType.landslide, HazardType.fire):
+    explicit_rescue = _has(t, RESCUE)
+    safe_update = _has(t, SAFE) and not re.search(r"\b(?:theek|thik|safe)\s+nahi", t)   # "sab theek nahi hai"
+    inferred = in_water_with_person or ex.hazard in (HazardType.collapse, HazardType.landslide, HazardType.fire)
+    if explicit_rescue or (inferred and not safe_update):
         needs.append(Need.rescue)
     if ex.medical in (MedicalSeverity.serious, MedicalSeverity.life_threatening):
         needs.append(Need.medical)
@@ -206,9 +256,14 @@ def extract(text: str) -> Extraction:
         needs.append(Need.shelter)
     if _has(t, EVAC):
         needs.append(Need.evacuation)
+    if _has(t, WELFARE):
+        needs.append(Need.welfare_check)
     plea = _has(t, PLEA)
-    if not needs and ex.hazard and plea:
+    if not needs and ex.hazard and plea and not safe_update:
         needs.append(Need.rescue)
+    if not needs and safe_update:
+        ex.is_help_request = False          # status update: shown in Activity, never a new case
+        return ex
     if not needs and not plea and (_has(t, QUESTION_ONLY) or raw_lower.strip().endswith("?")):
         needs.append(Need.information)
         ex.is_help_request = False
@@ -216,6 +271,11 @@ def extract(text: str) -> Extraction:
         ex.is_help_request = False
     ex.needs = needs
     return ex
+
+
+def is_status_update(text: str) -> bool:
+    """'aag bujh gayi', 'sab theek hai': the sender is reporting, not asking."""
+    return _has(geo.normalize(text), SAFE)
 
 
 def people_factor(n: Optional[int], has_need: bool) -> float:

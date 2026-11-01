@@ -76,6 +76,10 @@ MERGE_EPS = 0.45
 MERGE_MAX_KM = 0.40
 MERGE_WINDOW_MIN = 60
 NEED_MISMATCH_PENALTY = 0.30
+# Same place is NOT enough: the two texts must also say similar things (place tag excluded).
+# Chosen on the 50 synthetic TUNE messages: same-case pairs mostly >= 0.44, different cases mostly <= 0.38.
+MERGE_MIN_TEXT_SIM = 0.40
+STATED_PEOPLE_CONFLICT = 3         # "200 students" vs "3 log": both written, >= 3x apart -> two different cases
 
 # ----------------------------------------------------------------- optimizer (PRD 6.5)
 # "weighted" (default): cost = travel_min * (1 + priority/10) - LAMBDA * priority + penalty
