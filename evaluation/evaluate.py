@@ -164,7 +164,11 @@ def score(rows: list[dict], run: dict) -> dict:
     used = Counter((e.extractor.split(":")[0] if e else "none") for e in ex)
 
     # 1. extraction ------------------------------------------------------
-    help_rows = [k for k, r in enumerate(rows) if r["needs"] and "information" not in r["needs"]]
+    # fakes are scored in section 4 only: their place / need / people labels are "n/a"
+    help_rows = [k for k, r in enumerate(rows) if r["needs"] and "information" not in r["needs"] and not r["fake"]]
+    from shared.schemas import Need
+    known = {n.value for n in Need}
+    need_rows = [k for k in help_rows if rows[k]["needs"] & known]     # "hazard", "unknown": no RAHAT category
     place_hit = place_wrong = place_missed = 0
     for k in help_rows:
         pred = ex[k].place_id if ex[k] else None
@@ -172,7 +176,7 @@ def score(rows: list[dict], run: dict) -> dict:
         place_hit += pred == true
         place_wrong += pred is not None and pred != true          # worst error: team goes to the wrong place
         place_missed += pred is None and true is not None
-    need_hit = sum(1 for k in help_rows if ex[k] and rows[k]["needs"] & {n.value for n in ex[k].needs})
+    need_hit = sum(1 for k in need_rows if ex[k] and rows[k]["needs"] & {n.value for n in ex[k].needs})
     ppl_rows = [k for k in help_rows if rows[k]["people"] is not None]
     ppl_hit = sum(1 for k in ppl_rows if ex[k] and ex[k].people_count == rows[k]["people"])
     v_tp = v_fp = v_fn = 0
@@ -183,6 +187,8 @@ def score(rows: list[dict], run: dict) -> dict:
     # help request vs noise ("kab tak barish rukegi?")
     h_tp = h_fp = h_fn = 0
     for k, row in enumerate(rows):
+        if row["fake"]:
+            continue
         true_help = bool(row["needs"]) and "information" not in row["needs"]
         pred_help = msgs[k].status.value != "info"
         h_tp += true_help and pred_help; h_fp += (not true_help) and pred_help; h_fn += true_help and not pred_help
@@ -227,7 +233,8 @@ def score(rows: list[dict], run: dict) -> dict:
             "place_correct": ratio(place_hit, len(help_rows)),
             "place_wrong_place": ratio(place_wrong, len(help_rows)),
             "place_missed": ratio(place_missed, len(help_rows)),
-            "need_found": ratio(need_hit, len(help_rows)),
+            "need_found": ratio(need_hit, len(need_rows)),
+            "need_rows_without_rahat_category": len(help_rows) - len(need_rows),
             "people_exact": ratio(ppl_hit, len(ppl_rows)),
             "vulnerable": prf(v_tp, v_fp, v_fn),
             "help_vs_noise": prf(h_tp, h_fp, h_fn),

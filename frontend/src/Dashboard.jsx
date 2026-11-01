@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { api, useLive, toast, errText, caseKind, explainFlag, KIND, BAND_COLOR, BAND_NAME, ASSIGN_TEXT, TEAM_ICON, VULN_TEXT, ago, fmtTime } from './api.js'
+import { api, useLive, toast, errText, explainFlag, BAND_COLOR, BAND_NAME, ASSIGN_TEXT, TEAM_ICON, VULN_TEXT, ago, fmtTime, hazardNames } from './api.js'
 import Toasts from './Toasts.jsx'
 import { flushOpQueue, opQueue, setSimOffline, simOffline } from './opqueue.js'
 import MapView from './MapView.jsx'
@@ -329,7 +329,7 @@ function Card({ i, act, rec, teams, place, area, live, selected, fresh, onClick,
         <span className="qband"><i />{BAND_NAME[i.band]}</span>
         <span className="qtime">{live && <span className="qlive" title="At least one message came from a real phone via WhatsApp">🟢 Live WhatsApp</span>}{ago(i.created_at)}</span>
       </div>
-      <div className="qcard-title"><span className="qkind" title={caseKind(i)[2]}>{caseKind(i)[1]}</span>{title}</div>
+      <div className="qcard-title">{hazardNames(i).map(([h, w]) => <span key={h} className={`hz-tag hz-${h}`}>{w}</span>)}{title}</div>
       <div className="qfacts">
         {facts.map(([icon, text, cls]) => <span key={icon} className={cls || ''}><em>{icon}</em>{text}</span>)}
       </div>
@@ -390,11 +390,6 @@ function Legend() {
       ))}
       <div><span className="dot dashed" /> Dashed outline = check first</div>
       <div><span className="dot" style={{ background: '#9e9e9e' }} /> Closed</div>
-      <div className="legend-sep">Case type (icon in the circle)</div>
-      <div className="legend-icons">
-        {KIND.filter(([k]) => k !== 'check' && k !== 'other').map(([k, e, name]) => <span key={k}>{e} {name}</span>)}
-        <span>🏥 Hospital</span>
-      </div>
       <div className="legend-sep">Lines and areas</div>
       <div><span className="line grey" /> Suggested team</div>
       <div><span className="line blue" /> Team approved / on the way</div>

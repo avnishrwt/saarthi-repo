@@ -416,3 +416,27 @@ def test_status_update_gets_a_thank_you_not_an_error(r):
 def test_lane_number_is_not_a_head_count():
     assert rules.extract("deep nagar gali 4 buzurg aurat phasi hai boat bhejo").people_count == 1
     assert rules.extract("gali no 3 me 5 log phase hai").people_count == 5
+
+
+def test_fire_then_flood_from_same_sender_gets_both_teams(r):
+    # real demo case: text "aag lag gayi", then a voice note "baadh aa gayi" (Whisper writes बाड)
+    send(r, "S-fh", "Bchao muje aag lg gai yha Clement Town")
+    m = send(r, "S-fh", "बजाग। कलमटाँन है बाड आगाग हैग प्लीस बजाग [English: Please save me, I'm in Clemontown]")
+    inc = r.store.get("incidents", m.incident_id)
+    assert {h.value for h in inc.hazards} == {"fire", "water"}
+    assert {t.value for t in inc.required_team_types} >= {"fire", "boat"}
+
+
+def test_flood_spellings_are_water_hazard():
+    for t in ["baad aa gayi hai ghar me", "बाड आ गई है", "flud aa gaya", "फ्लड आया है"]:
+        assert rules.extract(t + " 3 log phase hain Majra").hazard is not None, t
+
+
+def test_hindi_script_flood_people_and_place():
+    # ढ़ typed as ONE character (U+095D) must read like ढ + nukta; Hindi numbers and digits count people
+    e = rules.extract("भाई सुभाष नगर में बा\u095d आ चुकी है, दो पीपल्स को नीड है जल्दी आ जाओ")
+    assert e.hazard is not None and e.hazard.value == "water"
+    assert e.people_count == 2 and e.location_text == "Subhash Nagar" and e.is_help_request
+    assert rules.extract("माजरा में ५ लोग फंसे हैं").people_count == 5
+    assert rules.extract("माजरा में पानी आया, आग नहीं").hazard.value in ("water", "fire")   # parses, no crash
+    assert rules.extract("आगाग हैग").hazard is None         # "आग" inside a longer word is not fire

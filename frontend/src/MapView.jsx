@@ -50,19 +50,10 @@ export default function MapView({ state, selected, onSelect }) {
     }
     lastSel.current = selected
     L.circle(area.center, { radius: area.radius_km * 1000, color: '#0f3d3e', weight: 1, dashArray: '4 6', fill: false }).addTo(g)
-    // flooded areas: light blue patch + a wave icon (skipped where a case already sits on top)
-    const occupied = new Set(incidents.filter((i) => i.status === 'open' || i.status === 'assigned').map((i) => i.location.place_id))
+    // flooded areas: light blue patch
     places.filter((p) => p.flooded).forEach((p) => {
-      L.circle([p.lat, p.lng], { radius: 180, color: '#38bdf8', weight: 1, opacity: 0.4, fillColor: '#7dd3fc', fillOpacity: 0.22 }).addTo(g)
-      if (!occupied.has(p.id)) {
-        L.marker([p.lat, p.lng], { icon: L.divIcon({ className: 'poi poi-flood', html: '🌊', iconSize: [28, 28] }) })
-          .bindTooltip(`${esc(p.name)}: flooded, boats only`).addTo(g)
-      }
-    })
-    // hospitals: fixed landmarks the operator needs for medical cases
-    places.filter((p) => /hospital|aspatal/i.test(p.name)).forEach((p) => {
-      L.marker([p.lat, p.lng], { icon: L.divIcon({ className: 'poi poi-hospital', html: '<span>🏥</span>', iconSize: [34, 34] }) })
-        .bindTooltip(`🏥 ${esc(p.name)}`).addTo(g)
+      L.circle([p.lat, p.lng], { radius: 180, color: '#38bdf8', weight: 1, opacity: 0.4, fillColor: '#7dd3fc', fillOpacity: 0.22 })
+        .bindTooltip(`${esc(p.name)}: flooded, boats only`).addTo(g)
     })
 
     const teamById = Object.fromEntries(teams.map((t) => [t.id, t]))
@@ -81,10 +72,10 @@ export default function MapView({ state, selected, onSelect }) {
       const closed = i.status === 'resolved' || i.status === 'false'
       const pos = [i.location.lat, i.location.lng]
       const r = 10 + Math.min(i.priority_score, 30) * 0.8          // coloured halo: bigger = more urgent
-      const size = closed ? 30 : Math.round(36 + Math.min(i.priority_score, 30) * 0.4)   // emoji badge 36..48 px
+      const size = closed ? 16 : Math.round(20 + Math.min(i.priority_score, 30) * 0.3)   // dot 20..29 px
       const color = closed ? '#9e9e9e' : BAND_COLOR[i.band]
-      const [, emoji, kindName] = caseKind(i)
-      const tip = `${emoji} <b>${kindName}</b> · ${BAND_NAME[i.band]} priority${closed ? ' (closed)' : ''}<br>${esc(i.title)}${i.red_flags.length ? `<br><span style="color:#b54708">⚠ May be fake: ${i.red_flags.map((f) => esc(explainFlag(f, i, area).short)).join(' · ')}</span>` : ''}<br><i>click for details</i>`
+      const kindName = caseKind(i)[2]
+      const tip = `<b>${kindName}</b> · ${BAND_NAME[i.band]} priority${closed ? ' (closed)' : ''}<br>${esc(i.title)}${i.red_flags.length ? `<br><span style="color:#b54708">⚠ May be fake: ${i.red_flags.map((f) => esc(explainFlag(f, i, area).short)).join(' · ')}</span>` : ''}<br><i>click for details</i>`
 
       if (!closed && i.band === 'CRIT') {   // pulsing ring: critical cases catch the eye on a busy map
         L.marker(pos, {
@@ -95,11 +86,11 @@ export default function MapView({ state, selected, onSelect }) {
       L.circleMarker(pos, {
         radius: r, color, weight: 0, fillColor: color, fillOpacity: closed ? 0.12 : 0.22, interactive: false,
       }).addTo(g)
-      // big round badge with the case-type emoji, border in the priority colour (dashed = check first)
+      // round dot in the priority colour (dashed white ring = check first)
       L.marker(pos, {
         icon: L.divIcon({
           className: `inc-badge ${closed ? 'closed' : ''} ${i.id === selected ? 'sel' : ''}`,
-          html: `<span style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.55)}px;border-color:${color};border-style:${i.confidence < 0.5 ? 'dashed' : 'solid'}">${emoji}</span>`,
+          html: `<span style="width:${size}px;height:${size}px;background:${color};border-style:${i.confidence < 0.5 ? 'dashed' : 'solid'}"></span>`,
           iconSize: [size, size],
         }),
         zIndexOffset: 500 + Math.round(i.priority_score),

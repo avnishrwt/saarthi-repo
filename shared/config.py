@@ -63,8 +63,11 @@ RED_FLAG_PENALTY = {
     "copy_paste_burst": 0.30,
     "low_reputation_sender": 0.20,
     "serial_reporter": 0.20,
+    "joke_marker": 0.35,
+    "implausible_count": 0.25,
     "location_not_found": 0.0,     # vague is not fake: shown, not penalised
 }
+IMPLAUSIBLE_PEOPLE = 500          # one sender, one spot, this many people: shown as a red flag
 COPY_PASTE_SIM = 0.92              # text similarity counted as "same text"
 COPY_PASTE_MIN_SENDERS = 3
 COPY_PASTE_WINDOW_S = 180

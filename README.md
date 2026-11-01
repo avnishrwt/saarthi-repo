@@ -22,7 +22,7 @@ cd frontend; npm install; npm run dev     # http://localhost:5173
 | API docs | `http://localhost:8000/docs` |
 
 Or run `npm run build` once; FastAPI then serves everything at `http://localhost:8000/ui/`.
-Tests: `.\.venv\Scripts\python -m pytest -q` (35 known-answer tests, including "optimizer sends Team A to dadi, greedy does not" and "two lanes of one colony stay two cases").
+Tests: `.\.venv\Scripts\python -m pytest -q` (49 known-answer tests, including "optimizer sends Team A to dadi, greedy does not" and "two lanes of one colony stay two cases").
 
 ## The map
 Real Dehradun places, with coordinates from OpenStreetMap (Nominatim) in `data/locations.csv`. Two flood zones: the
@@ -79,9 +79,9 @@ memory only, to send replies; the database stores only the hashed id.
 - **The LLM never allocates teams.** OR-Tools gives the same answer every time and every cost is shown.
 
 ## Before the pitch (still open)
-- **Gemini model**: default `gemini-3.1-flash-lite` (6/6 demo messages correct, 1–4 s each, tested 31 Oct). `gemini-2.5-flash` is closed to new keys. Still test 2–3 models on the 20 Hinglish messages (brief decision #1); free-tier rate limits may slow a 200-message burst, and the system then falls back to rules for the failed calls.
+- **Gemini model**: set `RAHAT_LLM_MODEL=gemini-3.5-flash-lite` in `.env` (clean Hinglish voice transcripts in 2–4 s on 1 Nov). The free tier allows **500 requests per day per project per model** (`gemini-3.1-flash-lite` hit it on 1 Nov; a new key in the same project does not help). Each message uses 1–2 calls: do not run big tests on demo day. `gemini-2.5-flash` is closed to new keys. Still test 2–3 models on the 20 Hinglish messages (brief decision #1); free-tier rate limits may slow a 200-message burst, and the system then falls back to rules for the failed calls.
 - **SOP documents**: two official NDMA guidelines are used (listed in `data/sop/sources.json`): *Management of Floods* (2008, Chapter 8 Flood Response) and *Management of Urban Flooding* (2010, Chapter 7). The PDFs are not in git; download them once with `.\.venv\Scripts\python -m rag.fetch_sop`. Every checklist step is copied from a response-chapter passage and shows section + PDF page; hazards the documents do not cover (fire, landslide, collapse) return "Not in SOP, escalate to officer". These are policy-level guidelines: they cover medical response and relief camps well, but contain few field-level boat-rescue steps. Add official SDRF/NDRF field SOPs to improve that. We never generate guidance from memory.
-- **Speech-to-text**: voice notes (WhatsApp OGG, browser WebM via ffmpeg, WAV/MP3) are transcribed by Gemini (`RAHAT_STT=gemini`, default when the Gemini key is set; `faster_whisper` and `none` also available), then go through the same extractor. The operator can play the original in the case pop-up. Tested only with a synthetic computer voice so far: test on real Hinglish/Garhwali voice notes before quoting accuracy. If transcription fails the note goes to human review (never dropped).
+- **Speech-to-text**: voice notes (WhatsApp OGG, browser WebM via ffmpeg, WAV/MP3) are transcribed by Gemini (`RAHAT_STT=gemini`, default when the Gemini key is set; `faster_whisper` and `none` also available), then go through the same extractor. If Gemini fails (quota, outage) and `faster-whisper` is installed, local Whisper is tried: it writes the Hindi words plus an English translation in brackets (Hindi alone garbles spellings, English alone drops place names), ~7 s per note on a CPU, much slower when several arrive together. The operator can play the original in the case pop-up. Tested only with a synthetic computer voice so far: test on real Hinglish/Garhwali voice notes before quoting accuracy. If transcription fails the note goes to human review (never dropped).
 - **200 labelled messages**: human-written (`data/labelled_messages_TEMPLATE.csv`). Do not use AI-generated messages for evaluation.
 
 ## Evaluation
@@ -104,5 +104,21 @@ memory only, to send replies; the database stores only the hashed id.
 .\.venv\Scripts\python -m evaluation.evaluate --split test --extractor both
 ```
 Each run prints a report with `(hits/n)` next to every number and saves JSON in `evaluation/results/`.
+### Stress test: the team's 200 AI-written messages (1 Nov)
+`data/rahat200_labelled_AI.csv` (converted from the team's Excel file with `python -m evaluation.convert_xlsx <xlsx>`; the label mapping is written at the top of that script). 31 places now in `data/locations.csv`; Kesarwala, Bhagat Singh Colony, Kathbangla, Chukkuwala and Mussoorie Road are not on OpenStreetMap and use the dataset's approximate coordinates. Fixes were made on the 49 `tune` messages only; `test` was run once afterwards. **Rules extractor only** (Gemini not yet run on it). AI-written messages: a stress test, not accuracy.
+
+| test split (151 messages, 59 real cases) | rules |
+|---|---|
+| place correct / wrong place | 94% (111/118) / 3 |
+| need found · people count exact | 62.5% (65/104) · 45.5% (46/101) |
+| help vs noise | F1 96% |
+| merging duplicates | P 61% · R 61% · F1 61% |
+| critical shown as critical | 77% (17/22) |
+| **under-triage** (critical/high shown as medium/low) | **30% (13/43)** |
+| fakes caught · real cases wrongly flagged | 1 of 4 fake cases · 0/55 |
+| longest critical wait | RAHAT 15.8 min vs greedy 60.5 min |
+
+Main misses: wording the keyword lists have never seen ("patthar pakad ke latka hai", "malbe me fasa", "deewaron me daraar", "baccha nahi mil raha"), vague messages, and hazards RAHAT has no category for (live wire, cracked bridge). Next: run `--extractor both` on `test` (~150–300 Gemini calls), and have each teammate rewrite 40 test messages in their own words.
+
 Rules: human-written messages only; quote only the `test` split; with ~200 messages one case moves a percentage by about 0.5 points, so give n with every number. The template rows are examples written alongside the demo, so a 100% there means nothing.
 - Not built: role-based login, auto-delete after closure, ledger (stretch). Say "future scope".

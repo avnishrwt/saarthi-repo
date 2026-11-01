@@ -194,6 +194,7 @@ class Incident(BaseModel):
     vulnerable: list[Vulnerable] = Field(default_factory=list)
     needs: list[Need] = Field(default_factory=list)
     hazard: Optional[HazardType] = None
+    hazards: list[HazardType] = Field(default_factory=list)   # every danger reported, e.g. fire AND flood
     hazard_detail: Optional[str] = None
     water_depth_ft: Optional[float] = None
     medical: MedicalSeverity = MedicalSeverity.none

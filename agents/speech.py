@@ -5,6 +5,7 @@ Engines (RAHAT_STT):
 - "gemini" (default when GEMINI_API_KEY is set): the Gemini model reads the audio directly.
   Hinglish / Hindi / English; we ask for the words exactly as spoken, nothing added.
 - "faster_whisper": local Whisper (pip install faster-whisper). Model via RAHAT_WHISPER_MODEL.
+  If Gemini fails (quota, outage) and faster-whisper is installed, it is tried as a fallback.
 - "none": no engine. The message goes to the human review queue marked
   "audio received, no speech-to-text engine". A voice note is never dropped.
 
@@ -109,13 +110,50 @@ def transcribe(path: str) -> tuple[Optional[str], str]:
         return None, "audio file not in uploads/ (refused)"
     e = engine()
     if e == "gemini":
-        return _gemini(path)
+        text, why = _gemini(path)
+        if text is None and "no speech heard" not in why and whisper_installed():
+            text, why2 = _whisper_text(path)          # quota / outage: try the local engine
+            return text, f"{why}, then {why2}"
+        return text, why
     if e == "faster_whisper":
-        try:
-            segments, info = _whisper().transcribe(path, language=None, vad_filter=True)
-            text = " ".join(s.text.strip() for s in segments).strip()
-            return (text or None), f"faster_whisper({info.language})"
-        except Exception as ex:
-            log.warning("transcription failed: %s", ex)
-            return None, "faster_whisper(failed)"
+        return _whisper_text(path)
     return None, "none"
+
+
+def whisper_installed() -> bool:
+    import importlib.util
+    return importlib.util.find_spec("faster_whisper") is not None
+
+
+def _pcm16k(path: str):
+    """Decode any audio to 16 kHz mono float32 with ffmpeg. faster-whisper's own decoder (PyAV)
+    breaks on newer PyAV versions, so we hand it samples instead. None if ffmpeg is missing."""
+    ff = shutil.which("ffmpeg")
+    if not ff:
+        return None
+    import numpy as np
+    out = subprocess.run([ff, "-nostdin", "-loglevel", "error", "-i", path, "-f", "f32le", "-ac", "1",
+                          "-ar", "16000", "-"], check=True, timeout=60, capture_output=True).stdout
+    return np.frombuffer(out, dtype=np.float32)
+
+
+def _whisper_text(path: str) -> tuple[Optional[str], str]:
+    try:
+        audio = _pcm16k(path)
+        src = path if audio is None else audio
+        # Auto-detect hears Hindi as Urdu (Urdu script), which the extractor cannot read, so the
+        # language is fixed (default Hindi). Whisper's Hindi spellings are irregular and an English
+        # translation drops place names, so we keep BOTH: words as spoken + English in brackets.
+        lang = os.getenv("RAHAT_WHISPER_LANG", "hi") or None
+        m = _whisper()
+        segments, info = m.transcribe(src, language=lang, vad_filter=True)
+        text = " ".join(s.text.strip() for s in segments).strip()
+        if text and info.language != "en":
+            segments, _ = m.transcribe(src, language=info.language, task="translate", vad_filter=True)
+            en = " ".join(s.text.strip() for s in segments).strip()
+            if en:
+                text = f"{text} [English: {en}]"
+        return (text or None), f"faster_whisper({info.language})"
+    except Exception as ex:
+        log.warning("transcription failed: %s", ex)
+        return None, "faster_whisper(failed)"

@@ -1,0 +1,1406 @@
+{
+ "_note": "AI-GENERATED synthetic messages (team's 200-message labelled test set, converted by evaluation/convert_xlsx.py; msg_id in 'ref'). Fictional scenario: monsoon night 14 Aug 2026, 02:00-02:30. Places are real Dehradun areas; Kesarwala, Bhagat Singh Colony, Kathbangla, Chukkuwala and Mussoorie Road use the dataset's APPROXIMATE coordinates (not found on OpenStreetMap). Timings compressed 15x. NOT real-world accuracy.",
+ "name": "rahat200_synthetic",
+ "messages": [
+  {
+   "t": 0.0,
+   "channel": "whatsapp",
+   "sender": "S-150",
+   "text": "हमें बचाओ",
+   "ref": "MSG-001"
+  },
+  {
+   "t": 2.4,
+   "channel": "whatsapp",
+   "sender": "S-001",
+   "text": "Sahastradhara main market ke paas wale guest house ki chhat pe 6 log phase hai, 2 chote bacche bhi, neeche paani bahut tez hai PLEASE JALDI",
+   "ref": "MSG-002"
+  },
+  {
+   "t": 4.1,
+   "channel": "whatsapp",
+   "sender": "S-010",
+   "text": "bhagat singh colony rispana kinare paani gharo me ghus gaya, 15-20 log hai, bacche bhi",
+   "ref": "MSG-003"
+  },
+  {
+   "t": 5.9,
+   "channel": "sms",
+   "sender": "S-112",
+   "text": "maldevta me meri maa akeli hai, phone pe bas itna bola paani aa raha, ab phone nahi lag raha",
+   "ref": "MSG-004"
+  },
+  {
+   "t": 6.4,
+   "channel": "whatsapp",
+   "sender": "S-114",
+   "text": "भगत सिंह कॉलोनी गली 11 में दिव्यांग भाई अकेले घर में, पानी बढ़ रहा है",
+   "ref": "MSG-005"
+  },
+  {
+   "t": 7.5,
+   "channel": "sms",
+   "sender": "S-120",
+   "text": "raipur song nadi ke paas mera ghar, akeli hu 2 bacchon ke saath, paani badh raha",
+   "ref": "MSG-006"
+  },
+  {
+   "t": 10.3,
+   "channel": "whatsapp",
+   "sender": "S-006",
+   "text": "Maldevta pul ke paas ghar pe malba aa gaya, papa aur 2 log andar hai, darwaza nahi khul raha",
+   "ref": "MSG-007"
+  },
+  {
+   "t": 10.7,
+   "channel": "sms",
+   "sender": "S-131",
+   "text": "kanwali me 5 log ghar me, paani kam hai par bahar nikal nahi sakte, kal tak chal jayega",
+   "ref": "MSG-008"
+  },
+  {
+   "t": 12.2,
+   "channel": "sms",
+   "sender": "S-174",
+   "text": "hum 10 log Rajpur road pe khana bana ke de sakte hai, kahan bheje?",
+   "ref": "MSG-009"
+  },
+  {
+   "t": 13.1,
+   "channel": "sms",
+   "sender": "S-023",
+   "text": "rispana pul pe gaadi beh rahi hai 2 log andar",
+   "ref": "MSG-010"
+  },
+  {
+   "t": 13.2,
+   "channel": "sms",
+   "sender": "S-118",
+   "text": "clement town me mera dost bike samet nale me gira, haath toota lag raha",
+   "ref": "MSG-011"
+  },
+  {
+   "t": 13.7,
+   "channel": "whatsapp",
+   "sender": "S-186",
+   "text": "kal GEHU ka exam cancel hai kya?",
+   "ref": "MSG-012"
+  },
+  {
+   "t": 13.7,
+   "channel": "whatsapp",
+   "sender": "S-052",
+   "text": "Bhai Raipur chowk ke peeche gali 3 mein meri dadi phasi hai, paani 5 feet hai",
+   "ref": "MSG-013"
+  },
+  {
+   "t": 14.7,
+   "channel": "whatsapp",
+   "sender": "S-011",
+   "text": "Bhagat Singh colony me nadi ka paani andar aa gaya, sab chhat pe chale gaye, nikalna hai",
+   "ref": "MSG-014"
+  },
+  {
+   "t": 14.9,
+   "channel": "sms",
+   "sender": "S-002",
+   "text": "sahastradhara guest house roof 6 ppl incl kids trapped water rising",
+   "ref": "MSG-015"
+  },
+  {
+   "t": 16.1,
+   "channel": "whatsapp",
+   "sender": "S-189",
+   "text": "gaadi beh gayi, insurance claim kaise karu?",
+   "ref": "MSG-016"
+  },
+  {
+   "t": 16.8,
+   "channel": "whatsapp",
+   "sender": "S-015",
+   "text": "tapkeshwar mandir ke neeche nadi me 4 log patthar pe phase hai, paani badh raha",
+   "ref": "MSG-017"
+  },
+  {
+   "t": 17.1,
+   "channel": "whatsapp",
+   "sender": "S-185",
+   "text": "is number pe call kar sakte hai?",
+   "ref": "MSG-018"
+  },
+  {
+   "t": 17.3,
+   "channel": "sms",
+   "sender": "S-150",
+   "text": "sahastradhara me 20 log phase hai turant aao",
+   "ref": "MSG-019"
+  },
+  {
+   "t": 17.9,
+   "channel": "whatsapp",
+   "sender": "S-054",
+   "text": "रायपुर गली 3 में दादी अकेली फंसी हैं, चल नहीं सकतीं",
+   "ref": "MSG-020"
+  },
+  {
+   "t": 18.0,
+   "channel": "sms",
+   "sender": "S-053",
+   "text": "raipur gali 3 old lady trapped plz",
+   "ref": "MSG-021"
+  },
+  {
+   "t": 19.1,
+   "channel": "whatsapp",
+   "sender": "S-003",
+   "text": "मेरे भाई का परिवार सहस्त्रधारा में गेस्ट हाउस की छत पर फंसा है, बच्चे भी हैं, कोई मदद भेजो",
+   "ref": "MSG-022"
+  },
+  {
+   "t": 19.3,
+   "channel": "whatsapp",
+   "sender": "S-020",
+   "text": "deepnagar me meri wife ko labour pain ho raha hai, road pe paani bhara hai ambulance nahi aa pa rahi",
+   "ref": "MSG-023"
+  },
+  {
+   "t": 19.4,
+   "channel": "whatsapp",
+   "sender": "S-059",
+   "text": "jakhan rajpur road pe landslide hua, ek car malbe me fasi, 3 log",
+   "ref": "MSG-024"
+  },
+  {
+   "t": 19.6,
+   "channel": "sms",
+   "sender": "S-007",
+   "text": "MALDEVTA HOUSE DEBRIS 3 PEOPLE INSIDE ONE IS 70 YRS OLD",
+   "ref": "MSG-025"
+  },
+  {
+   "t": 19.9,
+   "channel": "whatsapp",
+   "sender": "S-157",
+   "text": "pul ke paas wali basti me paani",
+   "ref": "MSG-026"
+  },
+  {
+   "t": 19.9,
+   "channel": "whatsapp",
+   "sender": "S-111",
+   "text": "main akela hu, 75 saal, ghar me paani aa gaya, sahastradhara mandir ke peeche",
+   "ref": "MSG-027"
+  },
+  {
+   "t": 21.3,
+   "channel": "whatsapp",
+   "sender": "S-024",
+   "text": "Car stuck near Rispana bridge haridwar road, 2 ppl inside, water at window level",
+   "ref": "MSG-028"
+  },
+  {
+   "t": 21.6,
+   "channel": "sms",
+   "sender": "S-184",
+   "text": "test message",
+   "ref": "MSG-029"
+  },
+  {
+   "t": 22.6,
+   "channel": "sms",
+   "sender": "S-016",
+   "text": "Tapkeshwar temple river 4 people stuck on rock pls send rescue fast",
+   "ref": "MSG-030"
+  },
+  {
+   "t": 23.3,
+   "channel": "whatsapp",
+   "sender": "S-008",
+   "text": "maldevta baldi nadi pul ke paas wala ghar, malbe me log dabe hai shayad, andar se awaz aa rahi hai",
+   "ref": "MSG-031"
+  },
+  {
+   "t": 23.9,
+   "channel": "whatsapp",
+   "sender": "S-025",
+   "text": "rispana pul ke paas car me log phase hai jaldi",
+   "ref": "MSG-032"
+  },
+  {
+   "t": 24.7,
+   "channel": "sms",
+   "sender": "S-152",
+   "text": "school ke paas log phase hai",
+   "ref": "MSG-033"
+  },
+  {
+   "t": 24.9,
+   "channel": "sms",
+   "sender": "S-126",
+   "text": "rispana pul ke neeche ek aadmi patthar pakad ke latka hai",
+   "ref": "MSG-034"
+  },
+  {
+   "t": 25.6,
+   "channel": "sms",
+   "sender": "S-012",
+   "text": "BSC colony rispana side flooding plz send help many families",
+   "ref": "MSG-035"
+  },
+  {
+   "t": 25.7,
+   "channel": "voice",
+   "sender": "S-004",
+   "text": "haan ji main Sahastradhara se bol raha hun... guest house ki chhat pe hain hum... 6 log... bachche ro rahe hain... paani neeche tak aa gaya hai",
+   "ref": "MSG-036"
+  },
+  {
+   "t": 25.7,
+   "channel": "whatsapp",
+   "sender": "S-017",
+   "text": "tapkeshwar me log phase hai nadi ke beech, hum kinare se dekh rahe hai, rassi nahi pahunch rahi",
+   "ref": "MSG-037"
+  },
+  {
+   "t": 25.9,
+   "channel": "whatsapp",
+   "sender": "S-026",
+   "text": "bindal pul ke neeche wali basti me paani, 8 log hai 2 budhe",
+   "ref": "MSG-038"
+  },
+  {
+   "t": 27.4,
+   "channel": "whatsapp",
+   "sender": "S-031",
+   "text": "Prem nagar me hamara PG tons nadi ke paas hai, ground floor me paani aa gaya, 12 students hai",
+   "ref": "MSG-039"
+  },
+  {
+   "t": 28.0,
+   "channel": "whatsapp",
+   "sender": "S-130",
+   "text": "premnagar hostel ki ek ladki ka last msg tha 'paani aa raha' ab reply nahi kar rahi",
+   "ref": "MSG-040"
+  },
+  {
+   "t": 28.1,
+   "channel": "sms",
+   "sender": "S-150",
+   "text": "deepnagar me 30 log doob rahe hai",
+   "ref": "MSG-041"
+  },
+  {
+   "t": 29.3,
+   "channel": "whatsapp",
+   "sender": "S-013",
+   "text": "भगत सिंह कॉलोनी में रिस्पना का पानी घरों में, 15 लोग छत पर",
+   "ref": "MSG-042"
+  },
+  {
+   "t": 29.6,
+   "channel": "sms",
+   "sender": "S-021",
+   "text": "Deepnagar rispana side pregnant lady needs hospital urgently road flooded",
+   "ref": "MSG-043"
+  },
+  {
+   "t": 29.7,
+   "channel": "whatsapp",
+   "sender": "S-055",
+   "text": "raipur song nadi side gali no 3, dadi ji ghar me akeli, koi nikalo unhe",
+   "ref": "MSG-044"
+  },
+  {
+   "t": 30.3,
+   "channel": "voice",
+   "sender": "S-018",
+   "text": "Tapkeshwar mandir ke paas... chaar ladke the nahane aaye... ab beech me patthar pe hain... paani bahut tez hai",
+   "ref": "MSG-045"
+  },
+  {
+   "t": 30.5,
+   "channel": "whatsapp",
+   "sender": "S-136",
+   "text": "URGENT!!! 50 log phase hai GHANTAGHAR ke paas paani 10 feet hai SABKO SHARE KARO 🙏🙏",
+   "ref": "MSG-046"
+  },
+  {
+   "t": 30.7,
+   "channel": "whatsapp",
+   "sender": "S-032",
+   "text": "premnagar pg ground floor flooded 12 students on 2nd floor, light bhi nahi hai",
+   "ref": "MSG-047"
+  },
+  {
+   "t": 30.7,
+   "channel": "whatsapp",
+   "sender": "S-139",
+   "text": "URGENT!!! 50 log phase hai GHANTAGHAR ke paas paani 10 feet hai SABKO SHARE KARO 🙏🙏",
+   "ref": "MSG-048"
+  },
+  {
+   "t": 30.9,
+   "channel": "whatsapp",
+   "sender": "S-137",
+   "text": "URGENT!!! 50 log phase hai GHANTAGHAR ke paas paani 10 feet hai SABKO SHARE KARO 🙏🙏",
+   "ref": "MSG-049"
+  },
+  {
+   "t": 31.2,
+   "channel": "whatsapp",
+   "sender": "S-138",
+   "text": "URGENT!!! 50 log phase hai GHANTAGHAR ke paas paani 10 feet hai SABKO SHARE KARO 🙏🙏",
+   "ref": "MSG-050"
+  },
+  {
+   "t": 31.6,
+   "channel": "whatsapp",
+   "sender": "S-034",
+   "text": "kathbangla basti me deewar gir gayi, ek ghar me 5 log, ek baccha ghayal",
+   "ref": "MSG-051"
+  },
+  {
+   "t": 31.7,
+   "channel": "whatsapp",
+   "sender": "S-027",
+   "text": "Bindal nadi kinare wale gharo me paani bhar gaya bhaiya, buzurg chal nahi sakte",
+   "ref": "MSG-052"
+  },
+  {
+   "t": 31.7,
+   "channel": "whatsapp",
+   "sender": "S-191",
+   "text": "meri dukaan me paani aa gaya tha, nuksaan hua, compensation milega?",
+   "ref": "MSG-053"
+  },
+  {
+   "t": 33.1,
+   "channel": "whatsapp",
+   "sender": "S-140",
+   "text": "URGENT!!! 50 log phase hai GHANTAGHAR ke paas paani 10 feet hai SABKO SHARE KARO 🙏🙏",
+   "ref": "MSG-054"
+  },
+  {
+   "t": 34.2,
+   "channel": "whatsapp",
+   "sender": "S-073",
+   "text": "bindal pul ke paas bijli ka taar paani me gira hai, log guzar rahe hai, light kaato",
+   "ref": "MSG-055"
+  },
+  {
+   "t": 34.3,
+   "channel": "whatsapp",
+   "sender": "S-141",
+   "text": "URGENT!!! 50 log phase hai GHANTAGHAR ke paas paani 10 feet hai SABKO SHARE KARO 🙏🙏",
+   "ref": "MSG-056"
+  },
+  {
+   "t": 34.3,
+   "channel": "sms",
+   "sender": "S-074",
+   "text": "Live wire fallen in water near Bindal bridge, dangerous",
+   "ref": "MSG-057"
+  },
+  {
+   "t": 34.5,
+   "channel": "whatsapp",
+   "sender": "S-142",
+   "text": "URGENT!!! 50 log phase hai GHANTAGHAR ke paas paani 10 feet hai SABKO SHARE KARO 🙏🙏",
+   "ref": "MSG-058"
+  },
+  {
+   "t": 34.7,
+   "channel": "sms",
+   "sender": "S-060",
+   "text": "Rajpur road jakhan landslide car under debris 3 ppl",
+   "ref": "MSG-059"
+  },
+  {
+   "t": 34.8,
+   "channel": "sms",
+   "sender": "S-182",
+   "text": "ok",
+   "ref": "MSG-060"
+  },
+  {
+   "t": 35.2,
+   "channel": "whatsapp",
+   "sender": "S-143",
+   "text": "URGENT!!! 50 log phase hai GHANTAGHAR ke paas paani 10 feet hai SABKO SHARE KARO 🙏🙏",
+   "ref": "MSG-061"
+  },
+  {
+   "t": 36.9,
+   "channel": "whatsapp",
+   "sender": "S-022",
+   "text": "दीपनगर में गर्भवती महिला को अस्पताल ले जाना है, सड़क पर पानी",
+   "ref": "MSG-062"
+  },
+  {
+   "t": 37.7,
+   "channel": "whatsapp",
+   "sender": "S-038",
+   "text": "kesarwala me ghar ke chaaro taraf paani, 7 log, dadi bimaar",
+   "ref": "MSG-063"
+  },
+  {
+   "t": 38.1,
+   "channel": "sms",
+   "sender": "S-009",
+   "text": "मालदेवता में मलबा, बुजुर्ग अंदर फंसे",
+   "ref": "MSG-064"
+  },
+  {
+   "t": 38.2,
+   "channel": "sms",
+   "sender": "S-166",
+   "text": "road toot gayi, gaadi aage nahi jaa rahi",
+   "ref": "MSG-065"
+  },
+  {
+   "t": 38.6,
+   "channel": "whatsapp",
+   "sender": "S-019",
+   "text": "टपकेश्वर मंदिर के पास 4 लोग नदी में फंसे",
+   "ref": "MSG-066"
+  },
+  {
+   "t": 39.5,
+   "channel": "sms",
+   "sender": "S-033",
+   "text": "prem nagar tons side PG me log phase hai, nikalne ka rasta band",
+   "ref": "MSG-067"
+  },
+  {
+   "t": 39.6,
+   "channel": "whatsapp",
+   "sender": "S-005",
+   "text": "sahasradhara me family stuck hai roof pe, koi boat ya rassi bhejo bhai",
+   "ref": "MSG-068"
+  },
+  {
+   "t": 39.6,
+   "channel": "sms",
+   "sender": "S-039",
+   "text": "Kesarwala village house surrounded by water 7 people 1 old lady sick",
+   "ref": "MSG-069"
+  },
+  {
+   "t": 39.7,
+   "channel": "sms",
+   "sender": "S-028",
+   "text": "bindal bridge slum area flooding, elderly ppl cant walk",
+   "ref": "MSG-070"
+  },
+  {
+   "t": 39.9,
+   "channel": "sms",
+   "sender": "S-150",
+   "text": "prem nagar me 40 log chhat pe bachao",
+   "ref": "MSG-071"
+  },
+  {
+   "t": 40.8,
+   "channel": "sms",
+   "sender": "S-014",
+   "text": "rispana ke kinare bhagat singh colony, mera ghar 3rd lane, sab chhat pe",
+   "ref": "MSG-072"
+  },
+  {
+   "t": 41.6,
+   "channel": "whatsapp",
+   "sender": "S-083",
+   "text": "mothrowala khet me 4 log ped pe chadhe hai, chaaro taraf paani",
+   "ref": "MSG-073"
+  },
+  {
+   "t": 41.9,
+   "channel": "whatsapp",
+   "sender": "S-075",
+   "text": "बिंदाल पुल के पास बिजली का तार पानी में गिरा",
+   "ref": "MSG-074"
+  },
+  {
+   "t": 41.9,
+   "channel": "whatsapp",
+   "sender": "S-172",
+   "text": "relief camp kahan hai Dehradun me?",
+   "ref": "MSG-075"
+  },
+  {
+   "t": 42.1,
+   "channel": "whatsapp",
+   "sender": "S-029",
+   "text": "बिंदाल पुल के पास बस्ती में पानी, बुजुर्ग हैं",
+   "ref": "MSG-076"
+  },
+  {
+   "t": 42.3,
+   "channel": "whatsapp",
+   "sender": "S-040",
+   "text": "केसरवाला में घर पानी से घिरा, सात लोग",
+   "ref": "MSG-077"
+  },
+  {
+   "t": 42.5,
+   "channel": "whatsapp",
+   "sender": "S-043",
+   "text": "kanwali road pe 20 log shaam se chhat pe hai, khana pani khatam",
+   "ref": "MSG-078"
+  },
+  {
+   "t": 42.6,
+   "channel": "whatsapp",
+   "sender": "S-181",
+   "text": "mere relatives Delhi me hai, unko kaise pata chalega hum theek hai?",
+   "ref": "MSG-079"
+  },
+  {
+   "t": 43.3,
+   "channel": "sms",
+   "sender": "S-155",
+   "text": "Sahastradhara road",
+   "ref": "MSG-080"
+  },
+  {
+   "t": 44.5,
+   "channel": "whatsapp",
+   "sender": "S-125",
+   "text": "chukkuwala gali 4 me mere dadaji oxygen pe hai, light chali gayi, cylinder 2 ghante ka bacha",
+   "ref": "MSG-081"
+  },
+  {
+   "t": 44.6,
+   "channel": "whatsapp",
+   "sender": "S-070",
+   "text": "bhagat singh colony gali 7 me bacche ko 104 bukhar, doctor chahiye, bahar nikal nahi sakte",
+   "ref": "MSG-082"
+  },
+  {
+   "t": 44.8,
+   "channel": "sms",
+   "sender": "S-035",
+   "text": "Kathbangla wall collapse, child injured, need ambulance + rescue",
+   "ref": "MSG-083"
+  },
+  {
+   "t": 45.8,
+   "channel": "whatsapp",
+   "sender": "S-046",
+   "text": "mothrowala me papa ki insulin khatam, dukaan band, ghar se nikal nahi sakte",
+   "ref": "MSG-084"
+  },
+  {
+   "t": 46.2,
+   "channel": "whatsapp",
+   "sender": "S-144",
+   "text": "Haridwar har ki pauri pe 200 log beh gaye video dekho forward karo",
+   "ref": "MSG-085"
+  },
+  {
+   "t": 47.0,
+   "channel": "whatsapp",
+   "sender": "S-192",
+   "text": "pet dog ghar me chhoot gaya, koi madad kar sakta hai?",
+   "ref": "MSG-086"
+  },
+  {
+   "t": 47.1,
+   "channel": "whatsapp",
+   "sender": "S-061",
+   "text": "जाखन राजपुर रोड पर भूस्खलन, कार फंसी",
+   "ref": "MSG-087"
+  },
+  {
+   "t": 47.7,
+   "channel": "sms",
+   "sender": "S-030",
+   "text": "bindal basti me log phase, 2 dadi hai unko utha ke le jaana padega",
+   "ref": "MSG-088"
+  },
+  {
+   "t": 47.9,
+   "channel": "sms",
+   "sender": "S-162",
+   "text": "gali 3 me paani",
+   "ref": "MSG-089"
+  },
+  {
+   "t": 48.2,
+   "channel": "whatsapp",
+   "sender": "S-062",
+   "text": "jakhan ke paas pahad gira hai gaadi ke upar, andar se awaz aa rahi",
+   "ref": "MSG-090"
+  },
+  {
+   "t": 49.5,
+   "channel": "whatsapp",
+   "sender": "S-049",
+   "text": "clement town ke peeche wali gali me gharo me paani, 10 log, kahin rehne ki jagah chahiye",
+   "ref": "MSG-091"
+  },
+  {
+   "t": 50.1,
+   "channel": "whatsapp",
+   "sender": "S-036",
+   "text": "काठबंगला में दीवार गिरी, बच्चा घायल",
+   "ref": "MSG-092"
+  },
+  {
+   "t": 50.1,
+   "channel": "sms",
+   "sender": "S-047",
+   "text": "Mothrowala elderly diabetic man needs insulin urgently",
+   "ref": "MSG-093"
+  },
+  {
+   "t": 50.2,
+   "channel": "sms",
+   "sender": "S-084",
+   "text": "4 men on tree in mothrowala fields, water rising",
+   "ref": "MSG-094"
+  },
+  {
+   "t": 50.2,
+   "channel": "whatsapp",
+   "sender": "S-161",
+   "text": "mummy ka phone nahi lag raha, wo ghar pe akeli thi",
+   "ref": "MSG-095"
+  },
+  {
+   "t": 51.0,
+   "channel": "whatsapp",
+   "sender": "S-037",
+   "text": "kath bangla rispana ke upar wali basti me deewar giri hai bhai jaldi aao",
+   "ref": "MSG-096"
+  },
+  {
+   "t": 51.3,
+   "channel": "whatsapp",
+   "sender": "S-044",
+   "text": "Kanwali road families need food and drinking water, kids hungry",
+   "ref": "MSG-097"
+  },
+  {
+   "t": 51.5,
+   "channel": "whatsapp",
+   "sender": "S-122",
+   "text": "kesarwala me gaay bhains beh rahi thi, ek aadmi unko bachane gaya tha wapas nahi aaya",
+   "ref": "MSG-098"
+  },
+  {
+   "t": 51.6,
+   "channel": "sms",
+   "sender": "S-150",
+   "text": "clement town bachao 25 log",
+   "ref": "MSG-099"
+  },
+  {
+   "t": 51.7,
+   "channel": "whatsapp",
+   "sender": "S-163",
+   "text": "ambulance bhejo",
+   "ref": "MSG-100"
+  },
+  {
+   "t": 53.1,
+   "channel": "whatsapp",
+   "sender": "S-056",
+   "text": "chukkuwala me mera bhai wheelchair pe hai, ghar me paani ghus raha, 6 log hai",
+   "ref": "MSG-101"
+  },
+  {
+   "t": 53.1,
+   "channel": "whatsapp",
+   "sender": "S-145",
+   "text": "Vikasnagar dam toot gaya hai sab bhaago!!!",
+   "ref": "MSG-102"
+  },
+  {
+   "t": 53.2,
+   "channel": "sms",
+   "sender": "S-050",
+   "text": "Clement town lane flooded, 3 families need shelter for tonight",
+   "ref": "MSG-103"
+  },
+  {
+   "t": 53.3,
+   "channel": "sms",
+   "sender": "S-041",
+   "text": "kesarwala gaon me hum phase hai plz help, sahastradhara road band hai",
+   "ref": "MSG-104"
+  },
+  {
+   "t": 53.3,
+   "channel": "whatsapp",
+   "sender": "S-156",
+   "text": "kesarwala",
+   "ref": "MSG-105"
+  },
+  {
+   "t": 54.5,
+   "channel": "whatsapp",
+   "sender": "S-167",
+   "text": "4 log hai, ek buzurg, ek bimaar",
+   "ref": "MSG-106"
+  },
+  {
+   "t": 55.7,
+   "channel": "sms",
+   "sender": "S-071",
+   "text": "BSC gali 7 child high fever need doctor",
+   "ref": "MSG-107"
+  },
+  {
+   "t": 56.1,
+   "channel": "whatsapp",
+   "sender": "S-183",
+   "text": "👍",
+   "ref": "MSG-108"
+  },
+  {
+   "t": 56.3,
+   "channel": "voice",
+   "sender": "S-063",
+   "text": "Jakhan ke paas... pahad gira... gaadi dab gayi... teen log the usme",
+   "ref": "MSG-109"
+  },
+  {
+   "t": 56.4,
+   "channel": "sms",
+   "sender": "S-057",
+   "text": "Chukkuwala wheelchair user + family need evacuation water entering",
+   "ref": "MSG-110"
+  },
+  {
+   "t": 57.6,
+   "channel": "whatsapp",
+   "sender": "S-064",
+   "text": "majra me 30 log school me ruke hai, khana nahi hai",
+   "ref": "MSG-111"
+  },
+  {
+   "t": 57.8,
+   "channel": "whatsapp",
+   "sender": "S-179",
+   "text": "kya Mussoorie jaana safe hai kal?",
+   "ref": "MSG-112"
+  },
+  {
+   "t": 58.3,
+   "channel": "sms",
+   "sender": "S-160",
+   "text": "koi hai kya??",
+   "ref": "MSG-113"
+  },
+  {
+   "t": 59.6,
+   "channel": "whatsapp",
+   "sender": "S-058",
+   "text": "चुक्खूवाला में व्हीलचेयर वाले को निकालना है",
+   "ref": "MSG-114"
+  },
+  {
+   "t": 60.1,
+   "channel": "whatsapp",
+   "sender": "S-132",
+   "text": "clement town PG me 3 ladke, safe hai par light nahi, phone charge khatam hone wala",
+   "ref": "MSG-115"
+  },
+  {
+   "t": 60.3,
+   "channel": "whatsapp",
+   "sender": "S-178",
+   "text": "humare ghar ka paani utar gaya, ab theek hai",
+   "ref": "MSG-116"
+  },
+  {
+   "t": 60.3,
+   "channel": "sms",
+   "sender": "S-045",
+   "text": "कांवली रोड पर खाना पानी चाहिए, 20 लोग",
+   "ref": "MSG-117"
+  },
+  {
+   "t": 60.5,
+   "channel": "whatsapp",
+   "sender": "S-067",
+   "text": "mera bhai shaam ko maldevta gaya tha bike se, phone band hai, koi pata karo",
+   "ref": "MSG-118"
+  },
+  {
+   "t": 61.7,
+   "channel": "whatsapp",
+   "sender": "S-100",
+   "text": "majra nale me ek baccha gir gaya, beh gaya, dhoondo jaldi",
+   "ref": "MSG-119"
+  },
+  {
+   "t": 61.9,
+   "channel": "whatsapp",
+   "sender": "S-148",
+   "text": "khana chahiye 4-5 log hai",
+   "ref": "MSG-120"
+  },
+  {
+   "t": 62.3,
+   "channel": "whatsapp",
+   "sender": "S-188",
+   "text": "blood donate karna hai, kahan jaun?",
+   "ref": "MSG-121"
+  },
+  {
+   "t": 64.1,
+   "channel": "voice",
+   "sender": "S-042",
+   "text": "Kesarwala se bol rahe hain... dadi ki tabiyat kharab hai... ghar ke charon taraf paani hai",
+   "ref": "MSG-122"
+  },
+  {
+   "t": 64.1,
+   "channel": "whatsapp",
+   "sender": "S-048",
+   "text": "मोथरोवाला में बुजुर्ग को इंसुलिन चाहिए",
+   "ref": "MSG-123"
+  },
+  {
+   "t": 64.4,
+   "channel": "whatsapp",
+   "sender": "S-076",
+   "text": "premnagar tons nadi pul me daraar aa gayi hai, gaadiyan abhi bhi chal rahi",
+   "ref": "MSG-124"
+  },
+  {
+   "t": 64.4,
+   "channel": "sms",
+   "sender": "S-150",
+   "text": "majra me 50 log phase hai jaldi",
+   "ref": "MSG-125"
+  },
+  {
+   "t": 65.1,
+   "channel": "whatsapp",
+   "sender": "S-176",
+   "text": "news me dikha rahe hai sahastradhara me baadal fata, sach hai?",
+   "ref": "MSG-126"
+  },
+  {
+   "t": 65.6,
+   "channel": "whatsapp",
+   "sender": "S-180",
+   "text": "Dehradun airport se flights chal rahi hai?",
+   "ref": "MSG-127"
+  },
+  {
+   "t": 65.9,
+   "channel": "whatsapp",
+   "sender": "S-065",
+   "text": "Majra govt school me families ruki hai, khana aur dawai chahiye",
+   "ref": "MSG-128"
+  },
+  {
+   "t": 66.4,
+   "channel": "sms",
+   "sender": "S-146",
+   "text": "rishikesh me laxman jhula toot gaya 100 log nadi me",
+   "ref": "MSG-129"
+  },
+  {
+   "t": 66.5,
+   "channel": "whatsapp",
+   "sender": "S-085",
+   "text": "मोथरोवाला में 4 लोग पेड़ पर",
+   "ref": "MSG-130"
+  },
+  {
+   "t": 66.6,
+   "channel": "whatsapp",
+   "sender": "S-068",
+   "text": "missing: 24 yr old boy went to maldevta, last call 9pm, phone off",
+   "ref": "MSG-131"
+  },
+  {
+   "t": 66.9,
+   "channel": "whatsapp",
+   "sender": "S-051",
+   "text": "क्लेमेंट टाउन में 3 परिवारों को रात रुकने की जगह चाहिए",
+   "ref": "MSG-132"
+  },
+  {
+   "t": 66.9,
+   "channel": "whatsapp",
+   "sender": "S-072",
+   "text": "भगत सिंह कॉलोनी गली 7, बच्चे को तेज बुखार",
+   "ref": "MSG-133"
+  },
+  {
+   "t": 67.1,
+   "channel": "sms",
+   "sender": "S-175",
+   "text": "bijli kab aayegi kanwali me?",
+   "ref": "MSG-134"
+  },
+  {
+   "t": 67.7,
+   "channel": "whatsapp",
+   "sender": "S-165",
+   "text": "baccha naale me beh gaya",
+   "ref": "MSG-135"
+  },
+  {
+   "t": 68.4,
+   "channel": "whatsapp",
+   "sender": "S-127",
+   "text": "bindal pul ke paas ek aurat apne bacche ko dhoond rahi hai, baccha nahi mil raha",
+   "ref": "MSG-136"
+  },
+  {
+   "t": 69.6,
+   "channel": "whatsapp",
+   "sender": "S-128",
+   "text": "sahastradhara ke upar wale gaon me ek ladki ko saanp ne kaata",
+   "ref": "MSG-137"
+  },
+  {
+   "t": 69.9,
+   "channel": "sms",
+   "sender": "S-066",
+   "text": "माजरा के स्कूल में 30 लोग, खाना चाहिए",
+   "ref": "MSG-138"
+  },
+  {
+   "t": 70.0,
+   "channel": "whatsapp",
+   "sender": "S-119",
+   "text": "mothrowala me mere nana ji 82 saal ke, bistar pe hai, ghar me paani",
+   "ref": "MSG-139"
+  },
+  {
+   "t": 70.3,
+   "channel": "whatsapp",
+   "sender": "S-080",
+   "text": "clement town subhash nagar side buzurg couple ground floor pe phase, paani kamar tak",
+   "ref": "MSG-140"
+  },
+  {
+   "t": 70.3,
+   "channel": "whatsapp",
+   "sender": "S-133",
+   "text": "majra me humare ghar ki chhat tapak rahi hai, 4 log, abhi theek hai",
+   "ref": "MSG-141"
+  },
+  {
+   "t": 70.5,
+   "channel": "sms",
+   "sender": "S-081",
+   "text": "Clement town elderly couple trapped ground floor, water waist deep",
+   "ref": "MSG-142"
+  },
+  {
+   "t": 71.1,
+   "channel": "sms",
+   "sender": "S-077",
+   "text": "Prem nagar bridge on tons river damaged, stop traffic",
+   "ref": "MSG-143"
+  },
+  {
+   "t": 71.5,
+   "channel": "whatsapp",
+   "sender": "S-088",
+   "text": "kesarwala me ek aadmi ka pair malbe se toot gaya, khoon beh raha",
+   "ref": "MSG-144"
+  },
+  {
+   "t": 71.5,
+   "channel": "whatsapp",
+   "sender": "S-151",
+   "text": "bindal pul pe magarmachh dikha hai sab bhaago 😂",
+   "ref": "MSG-145"
+  },
+  {
+   "t": 73.3,
+   "channel": "whatsapp",
+   "sender": "S-121",
+   "text": "kathbangla me ek ladka malbe me fasa, pair daba hai",
+   "ref": "MSG-146"
+  },
+  {
+   "t": 73.7,
+   "channel": "sms",
+   "sender": "S-069",
+   "text": "maldevta road pe koi lal bike wala ladka dikha kya? mera bhai hai",
+   "ref": "MSG-147"
+  },
+  {
+   "t": 74.5,
+   "channel": "whatsapp",
+   "sender": "S-190",
+   "text": "hello",
+   "ref": "MSG-148"
+  },
+  {
+   "t": 74.5,
+   "channel": "sms",
+   "sender": "S-101",
+   "text": "child fell into drain majra, swept away, urgent",
+   "ref": "MSG-149"
+  },
+  {
+   "t": 74.9,
+   "channel": "whatsapp",
+   "sender": "S-102",
+   "text": "माजरा में बच्चा नाले में बहा",
+   "ref": "MSG-150"
+  },
+  {
+   "t": 75.0,
+   "channel": "whatsapp",
+   "sender": "S-086",
+   "text": "mothrowala ke khet wale log ped pe hai bhai, raat bhar nahi tikenge",
+   "ref": "MSG-151"
+  },
+  {
+   "t": 75.8,
+   "channel": "whatsapp",
+   "sender": "S-078",
+   "text": "प्रेमनगर टोंस पुल में दरार",
+   "ref": "MSG-152"
+  },
+  {
+   "t": 76.7,
+   "channel": "whatsapp",
+   "sender": "S-091",
+   "text": "raipur community hall me 25 log ruke, kambal aur paani chahiye",
+   "ref": "MSG-153"
+  },
+  {
+   "t": 77.8,
+   "channel": "whatsapp",
+   "sender": "S-151",
+   "text": "kanwali me mere dost ka ghar doob gaya usne pura paani pi liya 😂😂",
+   "ref": "MSG-154"
+  },
+  {
+   "t": 78.0,
+   "channel": "sms",
+   "sender": "S-169",
+   "text": "kal school khulega kya?",
+   "ref": "MSG-155"
+  },
+  {
+   "t": 78.2,
+   "channel": "whatsapp",
+   "sender": "S-082",
+   "text": "क्लेमेंट टाउन में बुजुर्ग दंपति फंसे",
+   "ref": "MSG-156"
+  },
+  {
+   "t": 79.5,
+   "channel": "sms",
+   "sender": "S-092",
+   "text": "Raipur community hall 25 ppl need blankets water",
+   "ref": "MSG-157"
+  },
+  {
+   "t": 80.1,
+   "channel": "whatsapp",
+   "sender": "S-094",
+   "text": "kathbangla me ghar ki deewaron me daraar, 18 log, nikalna padega",
+   "ref": "MSG-158"
+  },
+  {
+   "t": 80.1,
+   "channel": "sms",
+   "sender": "S-089",
+   "text": "Kesarwala man leg fracture bleeding need medic",
+   "ref": "MSG-159"
+  },
+  {
+   "t": 80.7,
+   "channel": "whatsapp",
+   "sender": "S-117",
+   "text": "prem nagar me ek ghar ka ground floor doob gaya, uncle andar hi the, bahar nahi aaye",
+   "ref": "MSG-160"
+  },
+  {
+   "t": 80.8,
+   "channel": "whatsapp",
+   "sender": "S-079",
+   "text": "pul hil raha hai prem nagar wala, police bhejo traffic roko",
+   "ref": "MSG-161"
+  },
+  {
+   "t": 80.8,
+   "channel": "whatsapp",
+   "sender": "S-103",
+   "text": "majra wala nala, baccha 8 saal ka, neeli shirt, abhi 10 min pehle",
+   "ref": "MSG-162"
+  },
+  {
+   "t": 81.1,
+   "channel": "whatsapp",
+   "sender": "S-147",
+   "text": "mussoorie road pe 30 gaadiyan khai me giri hai sach me",
+   "ref": "MSG-163"
+  },
+  {
+   "t": 82.7,
+   "channel": "whatsapp",
+   "sender": "S-113",
+   "text": "deepnagar me ek budhi amma ki jhopdi beh rahi hai, wo akeli hai",
+   "ref": "MSG-164"
+  },
+  {
+   "t": 83.1,
+   "channel": "whatsapp",
+   "sender": "S-159",
+   "text": "nadi ke paas ghar hai mera, darr lag raha",
+   "ref": "MSG-165"
+  },
+  {
+   "t": 83.6,
+   "channel": "whatsapp",
+   "sender": "S-171",
+   "text": "Sahastradhara road kal tak khul jayega kya?",
+   "ref": "MSG-166"
+  },
+  {
+   "t": 83.7,
+   "channel": "whatsapp",
+   "sender": "S-177",
+   "text": "thank you rahat team, hum safe hai ab",
+   "ref": "MSG-167"
+  },
+  {
+   "t": 84.2,
+   "channel": "sms",
+   "sender": "S-152",
+   "text": "chukkuwala me 1000 log phase hai boat bhejo",
+   "ref": "MSG-168"
+  },
+  {
+   "t": 84.3,
+   "channel": "whatsapp",
+   "sender": "S-097",
+   "text": "jakhan me papa ko dialysis ke liye hospital jana hai, road band hai landslide se",
+   "ref": "MSG-169"
+  },
+  {
+   "t": 84.4,
+   "channel": "whatsapp",
+   "sender": "S-090",
+   "text": "केसरवाला में आदमी घायल, पैर टूटा",
+   "ref": "MSG-170"
+  },
+  {
+   "t": 85.1,
+   "channel": "whatsapp",
+   "sender": "S-151",
+   "text": "mere ghar ke paas wale mandir ke peeche paani bhar gaya",
+   "ref": "MSG-171"
+  },
+  {
+   "t": 86.0,
+   "channel": "sms",
+   "sender": "S-154",
+   "text": "dawai chahiye",
+   "ref": "MSG-172"
+  },
+  {
+   "t": 88.0,
+   "channel": "whatsapp",
+   "sender": "S-105",
+   "text": "sahastradhara hotel me hum 9 tourist hai delhi se, road band, kab nikal payenge?",
+   "ref": "MSG-173"
+  },
+  {
+   "t": 88.1,
+   "channel": "sms",
+   "sender": "S-087",
+   "text": "Mothrowala ped pe 4 log, torch se signal de rahe hai",
+   "ref": "MSG-174"
+  },
+  {
+   "t": 88.1,
+   "channel": "voice",
+   "sender": "S-129",
+   "text": "Deepnagar... humare ghar me teen log hain... ek ko sir pe chot lagi hai... khoon ruk nahi raha",
+   "ref": "MSG-175"
+  },
+  {
+   "t": 88.9,
+   "channel": "sms",
+   "sender": "S-149",
+   "text": "help plz paani ghar me",
+   "ref": "MSG-176"
+  },
+  {
+   "t": 89.1,
+   "channel": "whatsapp",
+   "sender": "S-093",
+   "text": "रायपुर कम्युनिटी हॉल में कंबल चाहिए",
+   "ref": "MSG-177"
+  },
+  {
+   "t": 91.2,
+   "channel": "sms",
+   "sender": "S-095",
+   "text": "Kathbangla houses cracking on slope, evacuate 4 families",
+   "ref": "MSG-178"
+  },
+  {
+   "t": 93.5,
+   "channel": "whatsapp",
+   "sender": "S-153",
+   "text": "bhai jaldi aao",
+   "ref": "MSG-179"
+  },
+  {
+   "t": 94.3,
+   "channel": "whatsapp",
+   "sender": "S-108",
+   "text": "chukkuwala me 2 chote bacche hai, doodh khatam, 12 log ghar me",
+   "ref": "MSG-180"
+  },
+  {
+   "t": 94.5,
+   "channel": "sms",
+   "sender": "S-104",
+   "text": "MAJRA BACCHA NAALE ME PLEASE KOI AAO",
+   "ref": "MSG-181"
+  },
+  {
+   "t": 95.4,
+   "channel": "sms",
+   "sender": "S-115",
+   "text": "tapkeshwar ke peeche wali gali me ek aunty ko saans ki dikkat, inhaler khatam",
+   "ref": "MSG-182"
+  },
+  {
+   "t": 95.7,
+   "channel": "whatsapp",
+   "sender": "S-124",
+   "text": "majra me ek aunty behosh ho gayi, sugar low lag raha, wo diabetic hai",
+   "ref": "MSG-183"
+  },
+  {
+   "t": 97.3,
+   "channel": "whatsapp",
+   "sender": "S-106",
+   "text": "Tourists stuck at sahastradhara hotel, safe but road blocked, 9 ppl",
+   "ref": "MSG-184"
+  },
+  {
+   "t": 97.7,
+   "channel": "sms",
+   "sender": "S-098",
+   "text": "Jakhan dialysis patient cant reach hospital, road blocked",
+   "ref": "MSG-185"
+  },
+  {
+   "t": 99.5,
+   "channel": "whatsapp",
+   "sender": "S-116",
+   "text": "kanwali road 2nd floor pe hu, 8 mahine pregnant, thodi bleeding ho rahi",
+   "ref": "MSG-186"
+  },
+  {
+   "t": 100.8,
+   "channel": "sms",
+   "sender": "S-109",
+   "text": "Need baby milk/formula chukkuwala, infants",
+   "ref": "MSG-187"
+  },
+  {
+   "t": 101.8,
+   "channel": "whatsapp",
+   "sender": "S-164",
+   "text": "छत पर हैं, पानी नीचे",
+   "ref": "MSG-188"
+  },
+  {
+   "t": 102.4,
+   "channel": "whatsapp",
+   "sender": "S-099",
+   "text": "जाखन से मरीज को अस्पताल ले जाना है, रास्ता बंद",
+   "ref": "MSG-189"
+  },
+  {
+   "t": 102.7,
+   "channel": "whatsapp",
+   "sender": "S-168",
+   "text": "kab tak barish rukegi?",
+   "ref": "MSG-190"
+  },
+  {
+   "t": 103.6,
+   "channel": "whatsapp",
+   "sender": "S-110",
+   "text": "चुक्खूवाला में बच्चों के लिए दूध चाहिए",
+   "ref": "MSG-191"
+  },
+  {
+   "t": 103.9,
+   "channel": "sms",
+   "sender": "S-123",
+   "text": "jakhan me ek budhe chowkidar ki kothri pe malba aa gaya, akele rehte hai",
+   "ref": "MSG-192"
+  },
+  {
+   "t": 104.2,
+   "channel": "whatsapp",
+   "sender": "S-096",
+   "text": "काठबंगला में घरों में दरारें, लोग डरे हुए",
+   "ref": "MSG-193"
+  },
+  {
+   "t": 104.3,
+   "channel": "voice",
+   "sender": "S-158",
+   "text": "...haan... paani... bacche... [awaaz kat gayi]",
+   "ref": "MSG-194"
+  },
+  {
+   "t": 106.7,
+   "channel": "sms",
+   "sender": "S-135",
+   "text": "मालदेवता के पास एक बस फंसी है, कुछ यात्री अंदर हैं",
+   "ref": "MSG-195"
+  },
+  {
+   "t": 107.5,
+   "channel": "whatsapp",
+   "sender": "S-187",
+   "text": "nal ka paani peene layak hai kya?",
+   "ref": "MSG-196"
+  },
+  {
+   "t": 108.3,
+   "channel": "whatsapp",
+   "sender": "S-134",
+   "text": "raipur me ek dukaan me 2 log phase, shutter jam ho gaya, paani andar aa raha",
+   "ref": "MSG-197"
+  },
+  {
+   "t": 112.5,
+   "channel": "sms",
+   "sender": "S-107",
+   "text": "sahastradhara me ruke hai hotel me, khana hai abhi par nikalna hai kal tak",
+   "ref": "MSG-198"
+  },
+  {
+   "t": 114.4,
+   "channel": "whatsapp",
+   "sender": "S-173",
+   "text": "मैं volunteer करना चाहता हूं, कैसे जुड़ूं?",
+   "ref": "MSG-199"
+  },
+  {
+   "t": 116.5,
+   "channel": "whatsapp",
+   "sender": "S-170",
+   "text": "IMD ka orange alert hai ya red?",
+   "ref": "MSG-200"
+  }
+ ]
+}

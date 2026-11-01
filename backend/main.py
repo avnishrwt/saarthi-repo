@@ -153,6 +153,9 @@ async def wa_inbound(request: Request):
                          raw_text=it["text"], audio_url=audio, lat=it["lat"], lng=it["lng"],
                          meta={"source_system": "whatsapp_cloud_api", "wa_message_id": it["id"],
                                "location_only": it["type"] == "location", "ack_template": whatsapp.ACK})
+        if it["media_id"] and not audio:
+            body.meta["review_reason"] = ("voice note received but could not be downloaded from WhatsApp: "
+                                          + whatsapp.last_media_error)
         from backend.service import hash_sender
         whatsapp.remember(hash_sender(it["wa_id"]), it["wa_id"])
         await asyncio.to_thread(rahat.ingest, body)      # ack is sent first thing in processing

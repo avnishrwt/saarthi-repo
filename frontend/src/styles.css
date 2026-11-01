@@ -509,7 +509,7 @@ button.light:hover { background: #f6f8fa; border-color: #c8d1db; }
 
 /* ---------------- big case badges on the map (readable from a distance) */
 .inc-badge { display: grid !important; place-items: center; }
-.inc-badge span { display: grid; place-items: center; box-sizing: border-box; background: #fff; border: 3px solid; border-radius: 50%; line-height: 1; box-shadow: 0 3px 10px rgba(0,0,0,.28); cursor: pointer; transition: transform .12s; }
+.inc-badge span { display: grid; place-items: center; box-sizing: border-box; border: 3px solid #fff; border-radius: 50%; line-height: 1; box-shadow: 0 3px 10px rgba(0,0,0,.28); cursor: pointer; transition: transform .12s; }
 .inc-badge span:hover { transform: scale(1.12); }
 .inc-badge.sel span { box-shadow: 0 0 0 4px rgba(17,24,39,.85), 0 3px 10px rgba(0,0,0,.3); }
 .inc-badge.closed span { opacity: .6; filter: grayscale(1); }
@@ -577,3 +577,11 @@ button.light:hover { background: #f6f8fa; border-color: #c8d1db; }
 .voice-by { font-size: 11px; color: #667085; }
 .rec-on { animation: pulse 1.2s infinite; font-weight: 700; }
 .sop-note { margin-top: 6px; line-height: 1.5; }
+
+/* disaster type as a word (no emoji): Flood / Fire / Landslide / Building collapse */
+.hz-tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase;
+  padding: 1px 7px; margin-right: 6px; border-radius: 4px; vertical-align: 2px; color: #fff; background: #555; }
+.hz-water { background: #1565c0; }
+.hz-fire { background: #c62828; }
+.hz-landslide { background: #6d4c41; }
+.hz-collapse { background: #5d4037; }

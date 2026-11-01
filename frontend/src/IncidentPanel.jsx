@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { sendTeamStatus } from './opqueue.js'
-import { api, API, ACTION_LABEL, ASSIGN_TEXT, BAND_COLOR, BAND_NAME, CALLBACK_TEXT, NEED_TEXT, TEAM_ICON, VULN_TEXT, ago, errText, explainFlag, fmtTime, toast, trustSteps } from './api.js'
+import { api, API, ACTION_LABEL, ASSIGN_TEXT, BAND_COLOR, BAND_NAME, CALLBACK_TEXT, NEED_TEXT, TEAM_ICON, VULN_TEXT, ago, errText, explainFlag, fmtTime, hazardNames, toast, trustSteps } from './api.js'
 
 const FACTOR_NAME = { medical: 'Medical danger', people: 'People at risk', vulnerable: 'Elderly / child / alone', hazard: 'Water / hazard level', waiting: 'Time waiting' }
 const STATUS_TEXT = { open: 'Open', assigned: 'Team assigned', resolved: 'Resolved', false: 'False report' }
@@ -77,7 +77,7 @@ export default function IncidentPanel({ id, state, onClose, version }) {
         <span className="ihead-meta">{i.id} · {STATUS_TEXT[i.status] || i.status} · first report {ago(i.created_at)}</span>
         <button className="ihead-x" onClick={onClose} aria-label="close">×</button>
       </div>
-      <h2>{i.title}</h2>
+      <h2>{hazardNames(i).map(([h, w]) => <span key={h} className={`hz-tag hz-${h}`}>{w}</span>)}{i.title}</h2>
     </div>
 
     <div className="inext">👉 <b>Next step:</b> {

@@ -21,10 +21,14 @@ NUM_WORDS = {
     "saat": 7, "aath": 8, "nau": 9, "das": 10, "bees": 20, "pachas": 50, "sau": 100,
     "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8,
     "nine": 9, "ten": 10, "twenty": 20, "fifty": 50, "hundred": 100,
+    # Hindi script (typed, or a voice note written down in Devanagari)
+    "एक": 1, "दो": 2, "तीन": 3, "चार": 4, "पांच": 5, "पाँच": 5, "छह": 6, "छः": 6, "छे": 6, "सात": 7,
+    "आठ": 8, "नौ": 9, "दस": 10, "बीस": 20, "पचास": 50, "सौ": 100,
 }
-PEOPLE_WORDS = (r"(?:log|logo|logon|people|persons|person|jan|members|member|aadmi|admi|ladka|ladki|aurat|mahila|"
+PEOPLE_WORDS = (r"(?:log|logo|logon|people|ppl|persons|person|men|women|jan|members|member|aadmi|admi|ladka|ladki|aurat|mahila|"
                 r"bacche|bachche|bacchon|bachon|kids|children|parivar|family|students|student|yatri|yaatri|"
-                r"passengers|marij|mariz|marijon|marizon|mareez|patients|buzurg|buzurgon|bujurg|bujurgon|लोग)")
+                r"passengers|marij|mariz|marijon|marizon|mareez|patients|buzurg|buzurgon|bujurg|bujurgon|"
+                r"लोगों|लोगो|लोग|पीपल्स|पीपल|बच्चों|बच्चे|आदमी|औरतें|औरत|महिलाएं|महिला|परिवार|सदस्य|मरीज|यात्री|छात्र)")
 # "10 chhote bacche", "2 bade log": one size word allowed between the number and the people word
 SIZE = r"(?:(?:chhote|chote|chhoti|choti|bade|badi|buzurg|bujurg)\s+)?"
 # "mere papa", "mera bhai": one named person (needs the possessive: a bare "bhai" is usually "bro")
@@ -37,9 +41,16 @@ def _squash(text: str) -> str:
     return re.sub(r"(\w)\1+", r"\1", text)
 
 
+# Devanagari vowel signs (ा ि ़ ...) are not \w in Python, so without this "आग" (fire) matched inside
+# "आगाग" (Whisper's spelling of "aa gaya"). Whole Hindi words only.
+_W = r"[\wऀ-ॿ]"
+
+
 def _has(text: str, words: list[str]) -> bool:
+    text = geo.nfc(text)
+    words = [geo.nfc(w) for w in words]
     sq = _squash(text)
-    return any(re.search(rf"(?<![\w]){w}(?![\w])", text) or re.search(rf"(?<![\w]){_squash(w)}(?![\w])", sq)
+    return any(re.search(rf"(?<!{_W}){w}(?!{_W})", text) or re.search(rf"(?<!{_W}){_squash(w)}(?!{_W})", sq)
                for w in words)
 
 
@@ -55,17 +66,23 @@ ALONE = ["akela", "akeli", "akele", "alone", "lives alone", "koi nahi hai", "अ
 
 RESCUE = ["phasi", "phase", "phasa", "phans", "phansa", "phansi", "phanse", "fasi", "fase", "fanse", "fasa",
           "fansa", "fansi", "trapped", "stuck", "bachao", "bacha lo", "rescue", "doob", "doob rahe", "drowning",
-          "beh gaya", "beh gaye", "beh gayi", "bah gaya", "bah gaye", "chhat pe", "chhat par", "roof",
+          "beh gaya", "beh gaye", "beh gayi", "bah gaya", "bah gaye", "chhat pe", "chhat par", "roof", "छत पर", "छत पे",
           "nahi nikal", "nikal nahi", "nikalo", "nikaalo", "nikal lo", "boat bhejo", "boat",
-          "फंसी", "फंसे", "फंसा", "बचाओ", "डूब", "निकालो",
+          "फंसी", "फंसे", "फंसा", "बचाओ", "डूब", "निकालो", "निकालना", "निकालना है",
+          "ped pe", "ped par", "pedh pe", "on tree", "on a tree", "up a tree", "पेड़ पर", "पेड़ पे",
+          "beh rahi", "bah rahi", "beh raha", "bah raha", "swept away", "car beh", "gaadi beh",
+          "khai me gir", "khai mein gir", "rasta band", "nikalna hai", "nikalne ka rasta",
           # pinned under something (not bare "daba": "dabba" = box)
           "dab gaya", "dab gayi", "dab gaye", "dabe hue", "daba hua", "dabi hui", "dab rakha", "dab rkha",
           "dab raha", "dab rha", "dab rahi", "neeche dab", "niche dab", "pinned", "crushed",
           "दब गया", "दब गई", "दबे", "नीचे दब"]
-PLEA = ["help", "madad", "sahayata", "emergency", "urgent", "sos", "save me", "मदद"]
+PLEA = ["help", "madad", "sahayata", "emergency", "urgent", "sos", "save me", "jaldi aao", "jaldi aa jao",
+        "मदद", "सहायता", "हेल्प", "हैल्प", "नीड", "इमरजेंसी", "जल्दी आओ", "जल्दी आ जाओ", "बचा लो"]
 MEDICAL_LIFE = ["behosh", "unconscious", "saans nahi", "saans nahi le", "not breathing", "heart attack",
                 "dil ka daura", "bahut khoon", "heavy bleeding", "critical", "mar raha", "dying",
-                "oxygen band", "oxygen khatam", "oxygen machine band", "oxygen nahi", "बेहोश"]
+                "oxygen band", "oxygen khatam", "oxygen machine band", "oxygen nahi", "बेहोश",
+                "saanp ne kaata", "saap ne kaata", "saanp ne kata", "saanp kaat", "snake bite", "snakebite",
+                "bitten by a snake", "सांप ने काटा", "साँप ने काटा"]
 # "toot gaya" alone is not medical ("pul toot gaya" = the bridge broke): only with a body part
 MEDICAL_SERIOUS = ["injured", "ghayal", "khoon", "bleeding", "fracture", "pair toot", "haath toot", "haddi toot",
                    "taang toot", "leg toot", "chot", "chot lagi", "tez bukhar", "high fever", "labour pain",
@@ -80,6 +97,7 @@ MEDICINE = ["dawai", "dawa", "davai", "medicine", "insulin", "tablet", "दव�
 # "relief camp me" means they are already in a shelter: only asking for one counts
 SHELTER = ["shelter", "rehne ki jagah", "chhat nahi", "ghar gir", "camp chahiye", "camp bhejo"]
 WELFARE = ["phone nahi utha", "phone nahi uth", "phone band", "sampark nahi", "contact nahi", "no contact",
+           "phone nahi lag", "phone nahi mil", "call nahi lag", "not reachable", "unreachable", "फोन नहीं लग",
            "not answering", "koi khabar nahi", "फोन नहीं उठा", "संपर्क नहीं"]
 # a status update, not a request: "aag bujh gayi sab bahar aa gaye", "sab theek hai bas safai chahiye".
 # Only removes the rescue we INFERRED from "water + people"; an explicit "phase hai" / "bachao" still counts.
@@ -88,8 +106,10 @@ SAFE = ["sab theek", "sab thik", "sab safe", "safe hai", "sab bahar aa gaye", "s
         "madad nahi chahiye", "help nahi chahiye", "सब ठीक", "सुरक्षित हैं"]
 EVAC = ["nikalna hai", "evacuate", "evacuation", "bahar nikalo", "shift karna"]
 
-WATER = ["paani", "pani", "water", "flood", "baadh", "badh", "doob", "pani bhar", "पानी", "बाढ़"]
+WATER = ["paani", "pani", "water", "flood", "flooded", "flooding", "flud", "baadh", "badh", "baad aa", "baad aagayi",
+         "doob", "pani bhar", "पानी", "बाढ़", "बाढ", "बाड़", "बाड", "फ्लड", "फ्लूड"]
 # moving water sweeps people away: scored like a roof rescue, not like "water entering house"
+ROOF_WORDS = ["chhat pe", "chhat par", "roof", "chhat tak", "chat pe", "छत पर", "छत पे", "छत तक"]
 SWIFT = ["paani tez", "pani tez", "tez paani", "tez pani", "tez bahav", "bahav tez", "nadi ke kinare", "nadi me",
          "nadi mein", "beh rahe", "beh rahi", "beh gaye", "beh gaya", "bah rahe", "current tez", "swift"]
 RISING = ["badh raha", "badh rahi", "badh gaya", "tezi se badh", "rising", "बढ़ रहा"]
@@ -126,6 +146,8 @@ def _people_count(t: str) -> tuple[Optional[int], bool]:
     if n is not None:
         return n, False
     if re.search(r"\b(?:hum|ham)\s+dono\b|\bdono\s+" + PEOPLE_WORDS, t) or re.search(r"\bmujhe aur meri?\b", t):
+        return 2, False
+    if _has(t, ["couple", "dampati", "dampatti", "pati patni", "mian biwi", "दंपति", "पति पत्नी"]):
         return 2, False
     if _has(t, ["pura parivar", "poora parivar", "puri family", "whole family", "family", "parivar"]):
         return 4, True          # estimated, shown as estimated on the dashboard
@@ -174,6 +196,7 @@ def _water_depth_ft(t: str) -> Optional[float]:
 
 
 def extract(text: str) -> Extraction:
+    text = geo.nfc(text)
     t = geo.normalize(text)
     raw_lower = text.lower()
     ex = Extraction(extractor="rules", language=detect_language(text))
@@ -211,11 +234,11 @@ def extract(text: str) -> Extraction:
         ex.hazard = HazardType.collapse
     elif _has(t, WATER) and not _has(t, WATER_NEED):
         ex.hazard = HazardType.water
-    elif depth is not None:
+    elif depth is not None or _has(t, SWIFT) or _has(t, ROOF_WORDS):
         ex.hazard = HazardType.water
     if ex.hazard == HazardType.water:
         ex.water_depth_ft = depth
-        if _has(t, ["chhat pe", "chhat par", "roof", "chhat tak", "chat pe"]):
+        if _has(t, ROOF_WORDS):
             ex.hazard_detail = "people on roof / water near roof"
         elif _has(t, SWIFT):
             ex.hazard_detail = "fast-moving water / river bank"

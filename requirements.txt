@@ -14,4 +14,4 @@ pypdf
 pytest
 # optional:
 # sentence-transformers   (RAHAT_EMBEDDINGS=st)
-# faster-whisper          (RAHAT_STT=faster_whisper)
+# faster-whisper          (RAHAT_STT=faster_whisper, or automatic backup when Gemini fails; needs ffmpeg)

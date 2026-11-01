@@ -94,12 +94,25 @@ def relay(sender_hash: str, text: str) -> None:
         send_text(wa, text)
 
 
+last_media_error = ""
+
+
 def download_media(media_id: str) -> Optional[str]:
-    """Voice notes: GET /{media-id} gives a short-lived URL; download it with the same token."""
+    """Voice notes: GET /{media-id} gives a short-lived URL; download it with the same token.
+    On failure the reason is kept in last_media_error so the review queue can show it."""
+    global last_media_error
     if not configured():
+        last_media_error = "WhatsApp not configured"
         return None
     try:
-        meta = httpx.get(f"{GRAPH}/{media_id}", timeout=10, headers={"Authorization": f"Bearer {TOKEN}"}).json()
+        r = httpx.get(f"{GRAPH}/{media_id}", timeout=10, headers={"Authorization": f"Bearer {TOKEN}"})
+        meta = r.json()
+        if r.status_code >= 300 or "url" not in meta:
+            err = meta.get("error", {})
+            last_media_error = (f"Meta refused the download ({r.status_code}, code {err.get('code')}"
+                                + (": WHATSAPP_TOKEN expired or invalid" if err.get("code") == 190 else "") + ")")
+            log.warning("media download failed: %s", last_media_error)
+            return None
         data = httpx.get(meta["url"], timeout=30, headers={"Authorization": f"Bearer {TOKEN}"}).content
         ext = {"audio/ogg": ".ogg", "audio/mpeg": ".mp3", "audio/mp4": ".m4a", "audio/amr": ".amr"}.get(
             (meta.get("mime_type") or "").split(";")[0], ".ogg")
@@ -108,6 +121,7 @@ def download_media(media_id: str) -> Optional[str]:
         path.write_bytes(data)
         return str(path)
     except Exception as e:
+        last_media_error = f"download error: {type(e).__name__}"
         log.warning("media download failed: %s", e)
         return None
 
@@ -119,6 +133,14 @@ def parse(payload: dict) -> list[dict]:
     for entry in payload.get("entry", []):
         for change in entry.get("changes", []):
             value = change.get("value", {})
+            # delivery receipts: a reply Meta accepted (200) can still fail later; say why (no phone number logged)
+            for st in value.get("statuses", []):
+                if st.get("status") == "failed":
+                    for err in st.get("errors", []) or [{}]:
+                        log.warning("WhatsApp reply NOT delivered: code %s %s %s", err.get("code"), err.get("title"),
+                                    (err.get("error_data") or {}).get("details", ""))
+                else:
+                    log.info("WhatsApp reply %s", st.get("status"))
             names = {c.get("wa_id"): c.get("profile", {}).get("name") for c in value.get("contacts", [])}
             for m in value.get("messages", []):
                 item = {"wa_id": m.get("from"), "id": m.get("id"), "type": m.get("type"),

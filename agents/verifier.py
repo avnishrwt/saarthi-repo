@@ -71,11 +71,20 @@ def _is_copy(msg: Message, members: list[Message]) -> bool:
     return bool(texts) and float(max(embeddings.similarities(key, texts))) >= config.COPY_PASTE_SIM
 
 
+JOKE = re.compile(r"😂|🤣|😆|😜|(?:lol|lmao|haha+|hehe+|mazaak|mazak)")
+
+
+def _is_joke(text: Optional[str]) -> bool:
+    return bool(JOKE.search((text or "").lower()))
+
+
 def conflict(msg: Message, ex: Extraction, inc: Incident, members: list[Message]) -> Optional[str]:
     """A named reason why msg must NOT join inc, even if place and words look close."""
     if not ex.is_help_request and msg.sender_hash not in inc.sender_hashes:
         # "sab theek hai" from someone else must never mark another person's case as fine
         return "status update from another sender (never merged into someone else's case)"
+    if _is_joke(msg.raw_text) != any(_is_joke(m.raw_text) for m in members):
+        return "one reads like a joke, the other does not"
     mine = _subplaces(msg.raw_text)
     theirs = set().union(*(_subplaces(m.raw_text) for m in members)) if members else set()
     if mine and theirs and not (mine & theirs):
@@ -169,6 +178,9 @@ def _merge_fields(inc: Incident, ex: Extraction, loc: Location) -> None:
         inc.needs.remove(Need.information)
     if ex.hazard and (inc.hazard is None or inc.hazard == HazardType.water and ex.hazard != HazardType.water):
         inc.hazard = ex.hazard
+    for h in (inc.hazard, ex.hazard):                 # keep every danger: fire then "baadh" needs both teams
+        if h and h not in inc.hazards:
+            inc.hazards.append(h)
     if ex.water_depth_ft and (inc.water_depth_ft or 0) < ex.water_depth_ft:
         inc.water_depth_ft = ex.water_depth_ft
     rank = lambda d: 3 if d and "roof" in d else 2 if d and "fast-moving" in d else 1 if d and "rising" in d else 0
@@ -265,6 +277,13 @@ def assess(store, inc: Incident, now: datetime) -> None:
         if len(recent) >= config.SERIAL_REPORTER_INCIDENTS and len(places) >= config.SERIAL_REPORTER_INCIDENTS:
             flags.append("serial_reporter: one number reported many unrelated emergencies in 30 min")
             break
+
+    # joke markers: "magarmachh dikha hai sab bhaago 😂"
+    if any(_is_joke(m.raw_text) for m in members):
+        flags.append("joke_marker: message contains laughing emoji / joke words")
+    # one sender claims hundreds of people at one spot, nobody else reports it
+    if inc.people_count and inc.people_count >= config.IMPLAUSIBLE_PEOPLE and len(senders) == 1:
+        flags.append(f"implausible_count: {inc.people_count} people at one spot, from a single sender")
 
     for f in flags:
         key = f.split(":")[0]

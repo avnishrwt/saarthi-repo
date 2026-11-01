@@ -16,15 +16,17 @@ def required_team_types(inc: Incident, surge_hazard: str = "flood") -> list[Team
             types.append(t)
 
     needs = set(inc.needs)
-    flooded = bool(inc.location.flooded) or inc.hazard == HazardType.water
+    hazards = set(inc.hazards) | ({inc.hazard} if inc.hazard else set())
+    flooded = bool(inc.location.flooded) or HazardType.water in hazards
     if Need.rescue in needs or Need.evacuation in needs or Need.welfare_check in needs:
-        if inc.hazard == HazardType.fire:
+        # one team per danger reported: "aag lagi" + "baadh aa gayi" -> fire team AND boat
+        if HazardType.fire in hazards:
             add(TeamType.fire)
-        elif inc.hazard in (HazardType.collapse, HazardType.landslide):
+        if hazards & {HazardType.collapse, HazardType.landslide}:
             add(TeamType.search_rescue)
-        elif flooded or surge_hazard == "flood":
+        if flooded or (not types and surge_hazard == "flood"):
             add(TeamType.boat)
-        else:
+        if not types:
             add(TeamType.search_rescue)
     if Need.medical in needs:
         add(TeamType.medical)            # boat + medical alert when both are needed

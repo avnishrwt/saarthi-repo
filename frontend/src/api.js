@@ -75,6 +75,8 @@ const FLAG_TEXT = {
   out_of_area: 'Location is outside the flood area',
   low_reputation_sender: 'Sender had false reports before',
   serial_reporter: 'Same number reported many different emergencies',
+  joke_marker: 'Message reads like a joke (laughing emoji)',
+  implausible_count: 'Huge number of people from a single sender',
 }
 export const flagText = (f) => FLAG_TEXT[f.split(':')[0]] || f
 
@@ -131,6 +133,14 @@ export function caseKind(i) {
   return KIND[11]
 }
 
+// Disaster type(s) as plain words: a case can report more than one ("aag lagi" + "baadh aa gayi")
+const HAZARD_WORD = { water: 'Flood', fire: 'Fire', landslide: 'Landslide', collapse: 'Building collapse' }
+export function hazardNames(i) {
+  const hs = [...(i.hazards || []), ...(i.hazard ? [i.hazard] : [])]
+  if (!hs.length && i.location?.flooded && (i.needs || []).includes('rescue')) hs.push('water')
+  return [...new Set(hs)].map((h) => [h, HAZARD_WORD[h] || h])
+}
+
 // ---------------------------------------------------------------- "why might this be fake?"
 const toRad = (d) => (d * Math.PI) / 180
 export function kmBetween(a, b) {
@@ -167,6 +177,14 @@ export function explainFlag(flag, inc, area) {
   if (key === 'serial_reporter') return {
     icon: '🔁', short: 'One number, many emergencies', title: 'One number, many different emergencies',
     why: 'This number reported several unrelated emergencies at different places within 30 minutes.',
+  }
+  if (key === 'joke_marker') return {
+    icon: '😂', short: 'Reads like a joke', title: 'Message reads like a joke',
+    why: 'It contains laughing emoji or joke words. Real calls for help rarely do: check before sending a team.',
+  }
+  if (key === 'implausible_count') return {
+    icon: '🔢', short: 'Huge count, one sender', title: 'Huge number of people, only one sender',
+    why: 'One number claims hundreds of people at one spot and nobody else reports it. Could be panic or a prank: call back first.',
   }
   return { icon: '⚑', short: key, title: key, why: rest || flag }
 }
